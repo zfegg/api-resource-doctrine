@@ -15,4 +15,10 @@ interface ExtensionInterface
      * @return iterable|void
      */
     public function getList($query, string $table, array $context);
+
+    /**
+     * @param ORMQueryBuilder|DbalQueryBuilder  $query
+     * @return object|array|void
+     */
+    public function get($query, string $table, array $context);
 }

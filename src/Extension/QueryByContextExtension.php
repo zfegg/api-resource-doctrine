@@ -4,6 +4,8 @@
 namespace Zfegg\ApiResourceDoctrine\Extension;
 
 
+use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
+use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 use Zfegg\ApiResourceDoctrine\ORM\OrmResource;
 
 class QueryByContextExtension implements ExtensionInterface
@@ -35,5 +37,13 @@ class QueryByContextExtension implements ExtensionInterface
             $query->andWhere($query->expr()->eq($field, ":{$attr['attr']}"));
             $query->setParameter($attr['attr'], $context[$attr['attr']]);
         };
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get($query, string $table, array $context)
+    {
+        $this->getList($query, $table, $context);
     }
 }

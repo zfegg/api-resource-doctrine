@@ -81,4 +81,11 @@ class SortExtension implements ExtensionInterface
             }
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function get($query, string $table, array $context)
+    {
+    }
 }

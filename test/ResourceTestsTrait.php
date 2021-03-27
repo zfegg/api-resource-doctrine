@@ -13,14 +13,14 @@ trait ResourceTestsTrait
     /**
      * @return DbalResource|OrmResource
      */
-    private function initResource()
+    private function initResource(array $context = [])
     {
         /** @var DbalResource $resource */
         $resource = $this->container->get('UsersResource');
-        $rs = $resource->create(['name' => 'test']);
-        $rs = $resource->create(['name' => 'test2']);
-        $rs = $resource->create(['name' => 'aaa']);
-        $rs = $resource->create(['name' => 'bbb']);
+        $rs = $resource->create(['name' => 'test'], $context);
+        $rs = $resource->create(['name' => 'test2'], $context);
+        $rs = $resource->create(['name' => 'aaa'], $context);
+        $rs = $resource->create(['name' => 'bbb'], $context);
 
         return $resource;
     }

@@ -98,9 +98,11 @@ class OrmResourceTest extends TestCase
         ];
         $this->setConfigExtensions($extensions);
 
-        $resource = $this->initResource();
+        $context = ['name' => 'aaa'];
 
-        $result = $resource->getList(['name' => 'aaa']);
+        $resource = $this->initResource($context);
+
+        $result = $resource->getList($context);
         $this->assertIsIterable($result);
         $this->assertCount(1, $result);
     }

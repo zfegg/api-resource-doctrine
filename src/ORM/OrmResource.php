@@ -81,13 +81,15 @@ class OrmResource implements ResourceInterface
     public function create($data, array $context = [])
     {
         $format = $context['format'] ?? '';
+        $context[self::ROOT_ALIAS] = 'o';
+
         $obj = $this->serializer->denormalize($data, $this->entityName, $format, $context);
 
         $this->em->persist($obj);
         $this->em->flush();
-        $this->em->refresh($obj);
+//        $this->em->refresh($obj);
 
-        return $obj;
+        return $this->get($this->em->getConnection()->lastInsertId(), $context);
     }
 
     public function update($id, $data, array $context = [])
@@ -113,6 +115,30 @@ class OrmResource implements ResourceInterface
 
     public function get($id, array $context = [])
     {
-        return $this->em->find($this->entityName, $id);
+        $query = $this->em->createQueryBuilder();
+        $query->select('o');
+        $query->from($this->entityName, 'o');
+        $query->where(
+            $query->expr()->eq(
+                'o.' . $this->em->getClassMetadata($this->entityName)->identifier[0],
+                $id
+            )
+        );
+
+        $context[self::ROOT_ALIAS] = 'o';
+
+        $result = null;
+
+        foreach ($this->extensions as $extension) {
+            if ($curResult = $extension->get($query, $this->entityName, $context)) {
+                $result = $curResult;
+            }
+        }
+
+        if ($result) {
+            return $result;
+        }
+
+        return $query->getQuery()->getOneOrNullResult();
     }
 }

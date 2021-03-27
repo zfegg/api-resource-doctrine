@@ -78,7 +78,7 @@ class DbalResource implements ResourceInterface
         $qb->setParameters($params);
         $qb->execute();
 
-        return $this->get($conn->lastInsertId());
+        return $this->get($conn->lastInsertId(), $context);
     }
 
     public function update($id, $data, array $context = [])
@@ -118,6 +118,18 @@ class DbalResource implements ResourceInterface
                 $query->expr()->eq($this->primary, $id)
             )
         ;
+
+        $result = null;
+
+        foreach ($this->extensions as $extension) {
+            if ($curResult = $extension->get($query, $this->table, $context)) {
+                $result = $curResult;
+            }
+        }
+
+        if ($result) {
+            return $result;
+        }
 
         return $query->execute()->fetchAssociative();
     }

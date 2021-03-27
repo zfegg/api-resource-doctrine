@@ -26,10 +26,7 @@ class PaginationExtension implements ExtensionInterface
     }
 
     /**
-     * @param ORMQueryBuilder|DbalQueryBuilder  $query
-     * @param string $table
-     * @param array $context
-     * @return ORMPaginator
+     * @inheritdoc
      */
     public function getList($query, string $table, array $context)
     {
@@ -48,5 +45,12 @@ class PaginationExtension implements ExtensionInterface
         }
 
         return $this->pageSize;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function get($query, string $table, array $context)
+    {
     }
 }

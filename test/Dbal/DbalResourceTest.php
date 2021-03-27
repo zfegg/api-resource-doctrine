@@ -86,9 +86,10 @@ class DbalResourceTest extends TestCase
         ];
         $this->setConfigExtensions($extensions);
 
-        $resource = $this->initResource();
+        $context = ['name' => 'aaa'];
+        $resource = $this->initResource($context);
 
-        $result = $resource->getList(['name' => 'aaa']);
+        $result = $resource->getList($context);
         $this->assertIsIterable($result);
         $rows = iterator_to_array($result);
         $this->assertCount(1, $rows);

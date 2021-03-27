@@ -132,4 +132,11 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
 
         return $this->rootAlias = $rootAlias;
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function get($query, string $table, array $context)
+    {
+    }
 }

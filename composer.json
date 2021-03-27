@@ -11,8 +11,8 @@
   ],
   "require": {
     "php": "^7.4 || ^8.0",
-    "zfegg/api-serializer-ext": "^0.1.0",
-    "zfegg/api-restful-handler": "^0.1.0"
+    "zfegg/api-serializer-ext": "dev-master",
+    "zfegg/api-restful-handler": "dev-main"
   },
   "autoload": {
     "psr-4": {

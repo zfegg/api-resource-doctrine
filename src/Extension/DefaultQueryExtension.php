@@ -11,7 +11,7 @@ class DefaultQueryExtension implements ExtensionInterface
     private array $parts;
     private array $entityParts;
 
-    public function __construct(array $parts, array $entityParts = [])
+    public function __construct(array $parts = [], array $entityParts = [])
     {
         $this->parts = $parts;
         $this->entityParts = $entityParts;

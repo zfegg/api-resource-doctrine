@@ -88,9 +88,9 @@ class OrmResource implements ResourceInterface
         $this->em->persist($obj);
         $this->em->flush();
 //        $this->em->refresh($obj);
-        $primary = $this->em->getClassMetadata($this->entityName)->getIdentifierValues($obj);
+        $primary = current($this->em->getClassMetadata($this->entityName)->getIdentifierValues($obj));
 
-        return $this->get(current($primary), $context);
+        return $this->get($primary, $context);
     }
 
     public function update($id, $data, array $context = [])
@@ -104,9 +104,10 @@ class OrmResource implements ResourceInterface
 
         $this->em->persist($obj);
         $this->em->flush();
-        $this->em->refresh($obj);
+//        $this->em->refresh($obj);
+        $primary = current($this->em->getClassMetadata($this->entityName)->getIdentifierValues($obj));
 
-        return $obj;
+        return $this->get($primary, $context);
     }
 
     public function patch($id, $data, array $context = [])

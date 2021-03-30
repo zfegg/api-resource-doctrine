@@ -88,8 +88,9 @@ class OrmResource implements ResourceInterface
         $this->em->persist($obj);
         $this->em->flush();
 //        $this->em->refresh($obj);
+        $primary = $this->em->getClassMetadata($this->entityName)->getIdentifierValues($obj);
 
-        return $this->get($this->em->getConnection()->lastInsertId(), $context);
+        return $this->get(current($primary), $context);
     }
 
     public function update($id, $data, array $context = [])

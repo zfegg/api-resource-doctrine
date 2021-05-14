@@ -2,13 +2,18 @@
 
 namespace Zfegg\ApiResourceDoctrine\ORM;
 
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface;
+use Zfegg\ApiRestfulHandler\Exception\ApiProblem;
+use Zfegg\ApiRestfulHandler\Exception\RequestException;
 use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
 use Zfegg\ApiRestfulHandler\Resource\ResourceNotAllowedTrait;
 
@@ -20,43 +25,52 @@ class OrmResource implements ResourceInterface
 
     private EntityManager $em;
     private string $entityName;
+
+    private ?OrmResource $parent;
+
     /**
      * @var ExtensionInterface[]
      */
     private array $extensions;
 
     private SerializerInterface $serializer;
-    /**
-     * @var PropertyAccessorInterface|null
-     */
-    private ?PropertyAccessorInterface $propertyAccessor;
+    private ?string $parentContextKey = null;
+    private ?array $associationMapping = null;
+    private ?ClassMetadataInfo $metadata = null;
+    private PropertyAccessorInterface $propertyAccessor;
 
     /**
      * ORM resource constructor.
      * @param ExtensionInterface[] $extensions
      */
-    public function __construct(EntityManager $em,
-                                string $entityName,
-                                SerializerInterface $serializer,
-                                array $extensions = [],
-                                PropertyAccessorInterface $propertyAccessor = null
+    public function __construct(
+        EntityManager $em,
+        string $entityName,
+        SerializerInterface $serializer,
+        PropertyAccessorInterface $propertyAccessor = null,
+        array $extensions = [],
+        ?OrmResource $parent = null
     )
     {
         $this->extensions = $extensions;
         $this->em = $em;
         $this->entityName = $entityName;
         $this->serializer = $serializer;
+        $this->parent = $parent;
         $this->propertyAccessor = $propertyAccessor ?: PropertyAccess::createPropertyAccessor();
     }
 
     public function getList(array $context = []): iterable
     {
+        $tableAlias = 'o';
         $query = $this->em->createQueryBuilder();
-        $query->select('o');
-        $query->from($this->entityName, 'o');
+        $query->select($tableAlias);
+        $query->from($this->entityName, $tableAlias);
         $result = null;
 
-        $context[self::ROOT_ALIAS] = 'o';
+        $this->joinParent($query, $context);
+
+        $context[self::ROOT_ALIAS] = $tableAlias;
 
         foreach ($this->extensions as $extension) {
             if ($curResult = $extension->getList($query, $this->entityName, $context)) {
@@ -83,12 +97,38 @@ class OrmResource implements ResourceInterface
         $format = $context['format'] ?? '';
         $context[self::ROOT_ALIAS] = 'o';
 
+        $meta = $this->getMetadata();
+        $associationFields = [];
+
+        if ($this->parent) {
+            $mapping = $this->getAssociationMapping();
+            $val = $context[$this->getParentContextKey()];
+            $associationFields[$mapping['fieldName']] = $this->em->getReference($this->parent->entityName, $val);
+        }
+
+        foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
+            $column = $mapping["joinColumns"][0]["name"];
+            if (isset($data[$column])) {
+                $associationFields[$fieldName] = $this->em->getReference($mapping['targetEntity'], $data[$column]);
+                unset($data[$column]);
+            }
+        }
+
         $obj = $this->serializer->denormalize($data, $this->entityName, $format, $context);
 
+        foreach ($associationFields as $key => $val) {
+            $this->propertyAccessor->setValue($obj, $key, $val);
+        }
+
         $this->em->persist($obj);
-        $this->em->flush();
+
+        try {
+            $this->em->flush();
+        } catch (UniqueConstraintViolationException $e) {
+            throw new RequestException(409, $e->getMessage(), $e);
+        }
 //        $this->em->refresh($obj);
-        $primary = current($this->em->getClassMetadata($this->entityName)->getIdentifierValues($obj));
+        $primary = current($meta->getIdentifierValues($obj));
 
         return $this->get($primary, $context);
     }
@@ -117,17 +157,22 @@ class OrmResource implements ResourceInterface
 
     public function get($id, array $context = [])
     {
+        $meta = $this->em->getClassMetadata($this->entityName);
+
+        $tableAlias = 'o';
         $query = $this->em->createQueryBuilder();
-        $query->select('o');
-        $query->from($this->entityName, 'o');
+        $query->select($tableAlias);
+        $query->from($this->entityName, $tableAlias);
         $query->where(
             $query->expr()->eq(
-                'o.' . $this->em->getClassMetadata($this->entityName)->identifier[0],
+                "$tableAlias.{$meta->identifier[0]}",
                 $id
             )
         );
 
-        $context[self::ROOT_ALIAS] = 'o';
+        $this->joinParent($query, $context);
+
+        $context[self::ROOT_ALIAS] = $tableAlias;
 
         $result = null;
 
@@ -142,5 +187,69 @@ class OrmResource implements ResourceInterface
         }
 
         return $query->getQuery()->getOneOrNullResult();
+    }
+
+    private function joinParent(QueryBuilder $query, array $context): void
+    {
+        $parentResource = $this->parent;
+        $curResource = $this;
+        $tableAlias = 'o';
+        $p = 0;
+
+        while ($parentResource) {
+            $curMapping = $curResource->getAssociationMapping();
+            $join = "$tableAlias.{$curMapping['fieldName']}";
+            $key = $curResource->getParentContextKey();
+            $query->andWhere($query->expr()->eq("IDENTITY($join)", ":$key"));
+            $query->setParameter($key, $context[$curResource->getParentContextKey()]);
+            if ($curResource !== $this) {
+                $tableAlias = "p$p";
+                $query->join($join, 'p');
+            }
+
+            $p++;
+            $curResource = $parentResource;
+            $parentResource = $parentResource->parent;
+        }
+    }
+
+    public function getParent(): ?ResourceInterface
+    {
+        return $this->parent;
+    }
+
+    public function getParentContextKey(): ?string
+    {
+        if (!$this->parent) {
+            return null;
+        }
+
+        if ($this->parentContextKey) {
+            return $this->parentContextKey;
+        }
+
+        $this->parentContextKey = $this->getAssociationMapping()['joinColumns'][0]['name'];
+
+        return $this->parentContextKey;
+    }
+
+    private function getAssociationMapping(): ?array
+    {
+        if (! $this->associationMapping) {
+            $mappings = $this->getMetadata()
+                ->getAssociationsByTargetClass($this->parent->entityName);
+            $this->associationMapping = current($mappings);
+        }
+
+        return $this->associationMapping;
+    }
+
+    private function getMetadata(): ClassMetadataInfo
+    {
+        if (! $this->metadata) {
+            $this->metadata = $this->em->getClassMetadata($this->entityName);
+        }
+
+        return $this->metadata;
     }
 }

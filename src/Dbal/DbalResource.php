@@ -57,7 +57,7 @@ class DbalResource implements ResourceInterface
         $query = $conn->createQueryBuilder();
         $query->select('*')->from($table);
 
-        $this->queryAddParent($query, $context);
+        $this->joinParent($query, $context);
 
         $result = null;
 
@@ -83,13 +83,6 @@ class DbalResource implements ResourceInterface
         $primary = $conn->quoteIdentifier($this->primary);
         $criteria = [$primary => $id];
 
-        if (isset($context[self::PARENT_RESOURCE])) {
-            $attr = $context[self::PARENT_RESOURCE];
-            if (isset($context[$attr])) {
-                $criteria[$conn->quoteIdentifier($attr)] = $context[$attr];
-            }
-        }
-
         $conn->delete($table, $criteria);
     }
 
@@ -107,12 +100,11 @@ class DbalResource implements ResourceInterface
             $params[] = $value;
         }
 
-        if (isset($context[self::PARENT_RESOURCE])) {
-            $attr = $context[self::PARENT_RESOURCE];
-            if (isset($context[$attr])) {
-                $qb->setValue($conn->quoteIdentifier($attr), '?');
-                $params[] = $context[$attr];
-            }
+        if ($this->parent) {
+            $key = $this->getParentContextKey();
+
+            $qb->setValue($conn->quoteIdentifier($key), '?');
+            $params[] = $context[$key];
         }
 
         $qb->setParameters($params);
@@ -140,7 +132,7 @@ class DbalResource implements ResourceInterface
             ->where(
                 $qb->expr()->eq($primary, $id)
             );
-        $this->queryAddParent($qb, $context);
+        $this->joinParent($qb, $context);
 
         $qb->setParameters($values);
         $qb->execute();
@@ -168,7 +160,7 @@ class DbalResource implements ResourceInterface
         ;
         $query->setParameter('primary', $id);
 
-        $this->queryAddParent($query, $context);
+        $this->joinParent($query, $context);
 
         $result = null;
 
@@ -185,14 +177,28 @@ class DbalResource implements ResourceInterface
         return $query->execute()->fetchAssociative();
     }
 
-    private function queryAddParent(QueryBuilder $query, array $context)
+
+    private function joinParent(QueryBuilder $query, array $context): void
     {
-        if ($this->parent && isset($context[$this->parentContextKey])) {
-            $query->andWhere($query->expr()->eq(
-                $this->conn->quoteIdentifier($this->parentContextKey),
-                ":$this->parentContextKey"
-            ));
-            $query->setParameter($this->parentContextKey, $context[$this->parentContextKey]);
+        $parentResource = $this->parent;
+        $curResource = $this;
+        $tableAlias = 'o';
+        $p = 0;
+
+        while ($parentResource) {
+            $key = $curResource->getParentContextKey();
+            $join = "$tableAlias.$key";
+            $query->andWhere($query->expr()->eq($this->conn->quoteIdentifier($key), ":$key"));
+            $query->setParameter($key, $context[$key]);
+
+            if ($curResource !== $this) {
+                $tableAlias = "p$p";
+                $query->join($join, 'p');
+            }
+
+            $p++;
+            $curResource = $parentResource;
+            $parentResource = $parentResource->parent;
         }
     }
 

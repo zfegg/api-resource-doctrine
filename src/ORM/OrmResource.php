@@ -107,6 +107,7 @@ class OrmResource implements ResourceInterface
         }
 
         foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
+            if (! isset($mapping['joinColumns'])) continue;
             $column = $mapping["joinColumns"][0]["name"];
             if (isset($data[$column])) {
                 $associationFields[$fieldName] = $this->em->getReference($mapping['targetEntity'], $data[$column]);

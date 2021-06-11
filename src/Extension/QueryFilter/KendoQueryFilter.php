@@ -13,10 +13,13 @@ class KendoQueryFilter extends AbstractQueryFilter
 
     private int $filterMaxDeep;
 
-    public function __construct(array $fields,
-                                int $filterMaxDeep = 2)
+    public function __construct(
+        array $fields,
+        int $filterMaxDeep = 2,
+        NamingStrategyInterface $namingStrategy = null
+    )
     {
-        parent::__construct($fields);
+        parent::__construct($fields, $namingStrategy);
         $this->filterMaxDeep = $filterMaxDeep;
     }
 

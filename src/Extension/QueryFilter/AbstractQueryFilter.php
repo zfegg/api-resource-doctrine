@@ -16,11 +16,13 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
     protected array $defaultFilters = [];
 
     private ?string $rootAlias = '';
+    protected NamingStrategyInterface $namingStrategy;
 
-    public function __construct(array $fields)
+    public function __construct(array $fields, ?NamingStrategyInterface $namingStrategy = null)
     {
         $this->fields = self::normalize($fields);
         $this->initDefaultFilters();
+        $this->namingStrategy = $namingStrategy ?: new NonNamingStrategy();
     }
 
     protected function initDefaultFilters(): void
@@ -106,7 +108,8 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
         }
 
         $op = self::OPERATORS[$op];
-        $field = $this->fields[$filter['field']]['field'] ?? (($rootAlias ? "$rootAlias." : '') . $filter['field']);
+        $field = $this->fields[$filter['field']]['field'] ??
+            (($rootAlias ? "$rootAlias." : '') . $this->namingStrategy->columnName($filter['field']));
         if (in_array($op, ['isNull', 'isNotNull'])) {
             $expr = $query->expr()->$op($field);
         } else {

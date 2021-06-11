@@ -74,21 +74,23 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
                 return $options[$name];
             }
 
-            return $this->resolveParameter($parameter, $container, $requestedName);
+            return $this->resolveParameter($parameter, $container, $requestedName, $options);
         };
     }
 
     /**
      * Logic common to all parameter resolution.
      *
-     * @param ReflectionParameter $parameter
-     * @param ContainerInterface $container
-     * @param string $requestedName
      * @return mixed
      * @throws ServiceNotFoundException If type-hinted parameter cannot be
      *   resolved to a service in the container.
      */
-    private function resolveParameter(ReflectionParameter $parameter, ContainerInterface $container, $requestedName)
+    private function resolveParameter(
+        ReflectionParameter $parameter,
+        ContainerInterface $container,
+        $requestedName,
+        array $options
+    )
     {
         if (! $parameter->getClass()) {
             if (! $parameter->isDefaultValueAvailable()) {
@@ -105,6 +107,14 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
 
         $type = $parameter->getClass()->getName();
         $type = isset($this->aliases[$type]) ? $this->aliases[$type] : $type;
+
+        if (
+            isset($options[$parameter->getName()])
+            && is_string($options[$parameter->getName()])
+            && $container->has($options[$parameter->getName()])
+        ) {
+            return $container->get($options[$parameter->getName()]);
+        }
 
         if ($container->has($type)) {
             return $container->get($type);

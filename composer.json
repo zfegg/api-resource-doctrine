@@ -11,8 +11,8 @@
   ],
   "require": {
     "php": "^7.4 || ^8.0",
-    "zfegg/api-serializer-ext": "dev-master",
-    "zfegg/api-restful-handler": "dev-main"
+    "zfegg/api-serializer-ext": "^0.1.1",
+    "zfegg/api-restful-handler": "^0.1.1"
   },
   "autoload": {
     "psr-4": {
@@ -29,9 +29,6 @@
       "config-provider": "Zfegg\\ApiResourceDoctrine\\ConfigProvider"
     }
   },
-  "config" : {
-    "vendor-dir": "../vendor"
-  },
   "require-dev": {
     "phpunit/phpunit": "^9.5",
     "slevomat/coding-standard": "^6.4",
@@ -46,15 +43,5 @@
     "doctrine/orm": "Doctrine ORM resource required",
     "symfony/property-access": "Doctrine ORM resource required",
     "symfony/serializer": "Doctrine ORM resource required"
-  },
-  "repositories": [
-    {
-      "type": "path",
-      "url": "/www/zfegg/api-restful-handler"
-    },
-    {
-      "type": "path",
-      "url": "/www/zfegg/api-serializer-ext"
-    }
-  ]
+  }
 }

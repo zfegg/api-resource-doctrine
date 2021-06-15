@@ -30,7 +30,7 @@ class KendoQueryFilter extends AbstractQueryFilter
     {
         $params = $context['query'] ?? [];
 
-        $this->filter((array)$params['filter'] ?? [], $query);
+        $this->filter((array)($params['filter'] ?? []), $query);
     }
 
     /**

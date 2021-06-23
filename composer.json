@@ -10,7 +10,8 @@
     }
   ],
   "require": {
-    "php": "^7.4 || ^8.0",
+    "php": ">=7.4",
+    "doctrine/dbal": "^2.2.0 || ^3.0.0",
     "zfegg/api-serializer-ext": "^0.1.1",
     "zfegg/api-restful-handler": "^0.1.1"
   },
@@ -39,7 +40,6 @@
     "symfony/property-access": "^5.2"
   },
   "suggest": {
-    "doctrine/dbal": "Doctrine DBAL resource required",
     "doctrine/orm": "Doctrine ORM resource required",
     "symfony/property-access": "Doctrine ORM resource required",
     "symfony/serializer": "Doctrine ORM resource required"

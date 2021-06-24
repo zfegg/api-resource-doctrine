@@ -92,7 +92,7 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
         array $options
     )
     {
-        if (! $parameter->getClass()) {
+        if ((! $parameter->getType()) || $parameter->getType()->isBuiltin()) {
             if (! $parameter->isDefaultValueAvailable()) {
                 throw new ServiceNotFoundException(sprintf(
                     'Unable to create service "%s"; unable to resolve parameter "%s" '
@@ -105,7 +105,7 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
             return $parameter->getDefaultValue();
         }
 
-        $type = $parameter->getClass()->getName();
+        $type = $parameter->getType()->getName();
         $type = isset($this->aliases[$type]) ? $this->aliases[$type] : $type;
 
         if (

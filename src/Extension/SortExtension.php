@@ -50,7 +50,7 @@ class SortExtension implements ExtensionInterface
     public function getList($query, string $table, array $context)
     {
         $this->sort(
-            $context['sort'] ?? $context['query']['sort'] ?? [],
+            (array)($context['sort'] ?? $context['query']['sort'] ?? []),
             $query,
             $context[OrmResource::ROOT_ALIAS] ?? null
         );

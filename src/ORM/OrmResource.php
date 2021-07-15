@@ -126,7 +126,7 @@ class OrmResource implements ResourceInterface
         try {
             $this->em->flush();
         } catch (UniqueConstraintViolationException $e) {
-            throw new RequestException(409, $e->getMessage(), $e);
+            throw new RequestException($e->getMessage(), 409, $e);
         }
 //        $this->em->refresh($obj);
         $primary = current($meta->getIdentifierValues($obj));

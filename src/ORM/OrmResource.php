@@ -2,6 +2,8 @@
 
 namespace Zfegg\ApiResourceDoctrine\ORM;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
@@ -106,12 +108,30 @@ class OrmResource implements ResourceInterface
             $associationFields[$mapping['fieldName']] = $this->em->getReference($this->parent->entityName, $val);
         }
 
-        foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
-            if (! isset($mapping['joinColumns'])) continue;
-            $column = $mapping["joinColumns"][0]["name"];
-            if (isset($data[$column]) && (is_string($data[$column]) || is_numeric($data[$column]))) {
-                $associationFields[$fieldName] = $this->em->getReference($mapping['targetEntity'], $data[$column]);
-                unset($data[$column]);
+        $mappings = $meta->getAssociationMappings();
+        foreach ($mappings as $fieldName => $mapping) {
+            if (isset($mapping['joinColumns'])) {
+                $column = $mapping["joinColumns"][0]["name"];
+                if (isset($data[$column]) && (is_string($data[$column]) || is_numeric($data[$column]))) {
+                    $associationFields[$fieldName] = $this->em->getReference($mapping['targetEntity'], $data[$column]);
+                    unset($data[$column]);
+                    continue;
+                }
+            }
+
+            // ManyToMany Collection
+            if (isset($data[$fieldName]) && is_array($data[$fieldName]) && isset($data[$fieldName][0])) {
+                $type = $meta->getReflectionProperty($fieldName)->getType();
+                if ($type && $type->getName() == Collection::class) {
+                    $collection = new ArrayCollection();
+
+                    foreach ($data[$fieldName] as $item) {
+                        $collection->add($this->em->getReference($mapping['targetEntity'], $item));
+                    }
+
+                    $data[$fieldName] = $collection;
+                    continue;
+                }
             }
         }
 
@@ -128,7 +148,6 @@ class OrmResource implements ResourceInterface
         } catch (UniqueConstraintViolationException $e) {
             throw new RequestException($e->getMessage(), 409, $e);
         }
-//        $this->em->refresh($obj);
         $primary = current($meta->getIdentifierValues($obj));
 
         return $this->get($primary, $context);
@@ -141,11 +160,11 @@ class OrmResource implements ResourceInterface
         $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $obj;
         $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
 
+        $this->updateCollection($data);
         $this->serializer->denormalize($data, $this->entityName, $format, $context);
 
         $this->em->persist($obj);
         $this->em->flush();
-//        $this->em->refresh($obj);
         $primary = current($this->em->getClassMetadata($this->entityName)->getIdentifierValues($obj));
 
         return $this->get($primary, $context);
@@ -252,5 +271,33 @@ class OrmResource implements ResourceInterface
         }
 
         return $this->metadata;
+    }
+
+    private function updateCollection(array &$data):void
+    {
+        $meta = $this->getMetadata();
+        foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
+
+            $targetMeta = $this->em->getClassMetadata($mapping['targetEntity']);
+            $id = $targetMeta->getIdentifier()[0];
+
+            // ManyToMany Collection
+            if (isset($data[$fieldName]) && is_array($data[$fieldName]) && isset($data[$fieldName][0])) {
+                $type = $meta->getReflectionProperty($fieldName)->getType();
+                if ($type && $type->getName() == Collection::class) {
+                    $collection = new ArrayCollection();
+
+                    foreach ($data[$fieldName] as $item) {
+                        $collection->add($this->em->getReference(
+                            $mapping['targetEntity'],
+                            is_array($item) ? $item[$id]: $item
+                        ));
+                    }
+
+                    $data[$fieldName] = $collection;
+                    continue;
+                }
+            }
+        }
     }
 }

@@ -121,8 +121,7 @@ class OrmResource implements ResourceInterface
 
             // ManyToMany Collection
             if (isset($data[$fieldName]) && is_array($data[$fieldName]) && isset($data[$fieldName][0])) {
-                $type = $meta->getReflectionProperty($fieldName)->getType();
-                if ($type && $type->getName() == Collection::class) {
+                if ($meta->isCollectionValuedAssociation($fieldName)) {
                     $collection = new ArrayCollection();
 
                     foreach ($data[$fieldName] as $item) {
@@ -160,7 +159,7 @@ class OrmResource implements ResourceInterface
         $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $obj;
         $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
 
-        $this->updateCollection($data);
+        $this->updateCollection($obj, $data);
         $this->serializer->denormalize($data, $this->entityName, $format, $context);
 
         $this->em->persist($obj);
@@ -273,7 +272,7 @@ class OrmResource implements ResourceInterface
         return $this->metadata;
     }
 
-    private function updateCollection(array &$data):void
+    private function updateCollection(object $obj, array &$data):void
     {
         $meta = $this->getMetadata();
         foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
@@ -283,9 +282,11 @@ class OrmResource implements ResourceInterface
 
             // ManyToMany Collection
             if (isset($data[$fieldName]) && is_array($data[$fieldName]) && isset($data[$fieldName][0])) {
-                $type = $meta->getReflectionProperty($fieldName)->getType();
-                if ($type && $type->getName() == Collection::class) {
-                    $collection = new ArrayCollection();
+                if ($meta->isCollectionValuedAssociation($fieldName)) {
+                    /** @var Collection $collection */
+                    $collection = $meta->getFieldValue($obj, $fieldName);
+                    $collection->clear();
+                    $this->em->flush();
 
                     foreach ($data[$fieldName] as $item) {
                         $collection->add($this->em->getReference(

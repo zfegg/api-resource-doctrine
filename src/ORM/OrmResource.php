@@ -99,7 +99,6 @@ class OrmResource implements ResourceInterface
         $format = $context['format'] ?? '';
         $context[self::ROOT_ALIAS] = 'o';
 
-        $meta = $this->getMetadata();
         $associationFields = [];
 
         if ($this->parent) {
@@ -108,8 +107,8 @@ class OrmResource implements ResourceInterface
             $associationFields[$mapping['fieldName']] = $this->em->getReference($this->parent->entityName, $val);
         }
 
-        $mappings = $meta->getAssociationMappings();
-        foreach ($mappings as $fieldName => $mapping) {
+        $meta = $this->getMetadata();
+        foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
             if (isset($mapping['joinColumns'])) {
                 $column = $mapping["joinColumns"][0]["name"];
                 if (isset($data[$column]) && (is_string($data[$column]) || is_numeric($data[$column]))) {
@@ -118,21 +117,9 @@ class OrmResource implements ResourceInterface
                     continue;
                 }
             }
-
-            // ManyToMany Collection
-            if (isset($data[$fieldName]) && is_array($data[$fieldName]) && isset($data[$fieldName][0])) {
-                if ($meta->isCollectionValuedAssociation($fieldName)) {
-                    $collection = new ArrayCollection();
-
-                    foreach ($data[$fieldName] as $item) {
-                        $collection->add($this->em->getReference($mapping['targetEntity'], $item));
-                    }
-
-                    $data[$fieldName] = $collection;
-                    continue;
-                }
-            }
         }
+
+        $this->updateJoins($data);
 
         $obj = $this->serializer->denormalize($data, $this->entityName, $format, $context);
 
@@ -159,7 +146,7 @@ class OrmResource implements ResourceInterface
         $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $obj;
         $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
 
-        $this->updateCollection($obj, $data);
+        $this->updateJoins($data);
         $this->serializer->denormalize($data, $this->entityName, $format, $context);
 
         $this->em->persist($obj);
@@ -272,27 +259,21 @@ class OrmResource implements ResourceInterface
         return $this->metadata;
     }
 
-    private function updateCollection(object $obj, array &$data):void
+    private function updateJoins(array &$data):void
     {
         $meta = $this->getMetadata();
         foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
-
             $targetMeta = $this->em->getClassMetadata($mapping['targetEntity']);
             $id = $targetMeta->getIdentifier()[0];
 
             // ManyToMany Collection
             if (isset($data[$fieldName]) && is_array($data[$fieldName]) && isset($data[$fieldName][0])) {
                 if ($meta->isCollectionValuedAssociation($fieldName)) {
-                    /** @var Collection $collection */
-                    $collection = $meta->getFieldValue($obj, $fieldName);
-                    $collection->clear();
-                    $this->em->flush();
+                    $collection = new ArrayCollection();
 
                     foreach ($data[$fieldName] as $item) {
-                        $collection->add($this->em->getReference(
-                            $mapping['targetEntity'],
-                            is_array($item) ? $item[$id]: $item
-                        ));
+                        $ref = $this->em->getReference($mapping['targetEntity'], is_array($item) ? $item[$id]: $item);
+                        $collection->add($ref);
                     }
 
                     $data[$fieldName] = $collection;

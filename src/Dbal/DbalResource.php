@@ -39,7 +39,7 @@ class DbalResource implements ResourceInterface
         string $primary,
         array $extensions = [],
         ?ResourceInterface $parent = null,
-        ?string $parentContextKey = null,
+        ?string $parentContextKey = null
     )
     {
         $this->conn = $connection;
@@ -193,7 +193,7 @@ class DbalResource implements ResourceInterface
 
             if ($curResource !== $this) {
                 $tableAlias = "p$p";
-                $query->join($join, 'p');
+                $query->join($join, $this->parent->table, $tableAlias);
             }
 
             $p++;

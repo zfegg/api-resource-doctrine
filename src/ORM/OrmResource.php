@@ -172,9 +172,10 @@ class OrmResource implements ResourceInterface
         $query->where(
             $query->expr()->eq(
                 "$tableAlias.{$meta->identifier[0]}",
-                $id
+                ':id'
             )
         );
+        $query->setParameter('id', $id);
 
         $this->joinParent($query, $context);
 
@@ -267,7 +268,7 @@ class OrmResource implements ResourceInterface
             $id = $targetMeta->getIdentifier()[0];
 
             // ManyToMany Collection
-            if (isset($data[$fieldName]) && is_array($data[$fieldName]) && isset($data[$fieldName][0])) {
+            if (isset($data[$fieldName]) && is_array($data[$fieldName])) {
                 if ($meta->isCollectionValuedAssociation($fieldName)) {
                     $collection = new ArrayCollection();
 

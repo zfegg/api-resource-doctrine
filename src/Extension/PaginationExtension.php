@@ -6,13 +6,12 @@ namespace Zfegg\ApiResourceDoctrine\Extension;
 use Zfegg\ApiResourceDoctrine\Dbal\Paginator as DbalPaginator;
 use Zfegg\ApiResourceDoctrine\ORM\Paginator as ORMPaginator;
 use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
-use Doctrine\Dbal\Query\QueryBuilder as DbalQueryBuilder;
 
 class PaginationExtension implements ExtensionInterface
 {
-    private int $pageSize;
+    protected int $pageSize;
 
-    private array $pageSizeRange;
+    protected array $pageSizeRange;
 
     /**
      * PaginationExtension constructor.
@@ -38,7 +37,7 @@ class PaginationExtension implements ExtensionInterface
         return $paginator;
     }
 
-    private function getAllowedPageSize(?int $pageSize): int
+    protected function getAllowedPageSize(?int $pageSize): int
     {
         if (in_array($pageSize, $this->pageSizeRange)) {
             return $pageSize;

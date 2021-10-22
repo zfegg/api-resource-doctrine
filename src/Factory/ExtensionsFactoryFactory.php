@@ -5,6 +5,7 @@ namespace Zfegg\ApiResourceDoctrine\Factory;
 
 
 use Psr\Container\ContainerInterface;
+use Zfegg\ApiResourceDoctrine\Extension\CursorPaginationExtension;
 use Zfegg\ApiResourceDoctrine\Extension\DefaultQueryExtension;
 use Zfegg\ApiResourceDoctrine\Extension\ExtensionsFactory;
 use Zfegg\ApiResourceDoctrine\Extension\PaginationExtension;
@@ -23,6 +24,7 @@ class ExtensionsFactoryFactory
                     ExtensionAbstractFactory::class,
                 ],
                 'aliases' =>  [
+                    'cursor_pagination' => CursorPaginationExtension::class,
                     'pagination' => PaginationExtension::class,
                     'default_query' => DefaultQueryExtension::class,
                     'query_by_context' => QueryByContextExtension::class,

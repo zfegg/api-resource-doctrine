@@ -204,21 +204,19 @@ class OrmResource implements ResourceInterface
         $p = 0;
 
         while ($parentResource) {
-
             $curMapping = $curResource->getAssociationMapping();
             $join = "$tableAlias.{$curMapping['fieldName']}";
             $key = $curResource->getParentContextKey();
             $query->andWhere($query->expr()->eq("IDENTITY($join)", ":$key"));
             $query->setParameter($key, $context[$curResource->getParentContextKey()]);
+            if ($curResource !== $this) {
+                $tableAlias = "p$p";
+                $query->join($join, 'p');
+            }
 
+            $p++;
             $curResource = $parentResource;
             $parentResource = $parentResource->parent;
-
-            if ($parentResource) {
-                $tableAlias = "p$p";
-                $query->join($join, $tableAlias);
-                $p++;
-            }
         }
     }
 

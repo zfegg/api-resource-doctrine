@@ -113,7 +113,7 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
         if (in_array($op, ['isNull', 'isNotNull'])) {
             $expr = $query->expr()->$op($field);
         } else {
-            $expr = $query->expr()->$op($field, "?$paramIndex");
+            $expr = $query->expr()->$op($field, $query instanceof ORMQueryBuilder ? "?$paramIndex" : '?');
             $query->setParameter($paramIndex, $value);
             $paramIndex++;
         }

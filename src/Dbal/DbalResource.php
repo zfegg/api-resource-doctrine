@@ -5,9 +5,8 @@ namespace Zfegg\ApiResourceDoctrine\Dbal;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Symfony\Component\Serializer\Serializer;
 use Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface;
-use Zfegg\ApiResourceDoctrine\ORM\OrmResource;
-use Zfegg\ApiRestfulHandler\Middleware\ResourceFindMiddleware;
 use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
 use Zfegg\ApiRestfulHandler\Resource\ResourceNotAllowedTrait;
 
@@ -28,6 +27,9 @@ class DbalResource implements ResourceInterface
 
     private ?ResourceInterface $parent;
     private ?string $parentContextKey;
+    private ?Serializer $serializer;
+
+    private ?string $entityName;
 
     /**
      * Dbal resource constructor.
@@ -39,7 +41,9 @@ class DbalResource implements ResourceInterface
         string $primary,
         array $extensions = [],
         ?ResourceInterface $parent = null,
-        ?string $parentContextKey = null
+        ?string $parentContextKey = null,
+        ?Serializer $serializer = null,
+        ?string $entityName = null
     )
     {
         $this->conn = $connection;
@@ -48,6 +52,8 @@ class DbalResource implements ResourceInterface
         $this->extensions = $extensions;
         $this->parent = $parent;
         $this->parentContextKey = $parentContextKey;
+        $this->serializer = $serializer;
+        $this->entityName = $entityName;
     }
 
     public function getList(array $context = []): iterable
@@ -73,7 +79,15 @@ class DbalResource implements ResourceInterface
 
         $stmt = $query->execute();
 
-        return new BaseResult($stmt);
+        if ($this->serializer) {
+            while ($row = $stmt->fetchAssociative()) {
+                yield $this->serializer->denormalize($row, $this->entityName);
+            }
+        } else {
+            while ($row = $stmt->fetchAssociative()) {
+                yield $row;
+            }
+        }
     }
 
     public function delete($id, array $context = []): void

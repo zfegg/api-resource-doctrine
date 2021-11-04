@@ -3,6 +3,7 @@
 namespace Zfegg\ApiResourceDoctrine\Extension;
 
 
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Zfegg\ApiResourceDoctrine\Dbal\Paginator as DbalPaginator;
 use Zfegg\ApiResourceDoctrine\ORM\Paginator as ORMPaginator;
 use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
@@ -29,10 +30,14 @@ class PaginationExtension implements ExtensionInterface
      */
     public function getList($query, string $table, array $context)
     {
+        $page = $context['query']['page'] ?? 1;
+        $pageSize = $this->getAllowedPageSize($context['query']['page_size'] ?? null);
+
+        $query->setFirstResult(($page - 1) * $pageSize);
+        $query->setMaxResults($pageSize);
+
         $class = $query instanceof ORMQueryBuilder ? ORMPaginator::class : DbalPaginator::class;
         $paginator = new $class($query);
-        $paginator->setCurrentPage($context['query']['page'] ?? 1);
-        $paginator->setItemsPerPage($this->getAllowedPageSize($context['query']['page_size'] ?? null));
 
         return $paginator;
     }

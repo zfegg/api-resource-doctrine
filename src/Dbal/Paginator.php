@@ -19,27 +19,32 @@ final class Paginator implements OffsetPaginatorInterface
         $this->query = $query;
     }
 
+    public function getCurrentPage(): int
+    {
+        $query = $this->query;
+        return ($query->getFirstResult() / $query->getMaxResults()) + 1;
+    }
+
+    public function getItemsPerPage(): int
+    {
+        return $this->query->getMaxResults();
+    }
+
     public function getIterator()
     {
         $query = $this->query;
-        $query->setFirstResult(($this->currentPage - 1) * $this->itemsPerPage);
-        $query->setMaxResults($this->itemsPerPage);
-
-        $stmt = $query->execute();
-
-        while($row = $stmt->fetchAssociative()) {
-            yield $row;
-        }
+        return $query->execute()->iterateAssociative();
     }
 
     public function count()
     {
         if ($this->count === null) {
             $countQuery = clone $this->query;
+            $countQuery->setMaxResults(null);
+            $countQuery->setFirstResult(null);
             if (! count($countQuery->getQueryPart('groupBy'))) {
                 $countQuery->select('count(*)');
                 $countQuery->resetQueryPart('orderBy');
-                $countQuery->setFirstResult(null);
             } else {
                 $countQuery->resetQueryPart('orderBy');
                 $countQuery = $this->query->getConnection()

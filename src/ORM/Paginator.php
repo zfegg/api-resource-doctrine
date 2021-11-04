@@ -8,7 +8,6 @@ use Zfegg\ApiSerializerExt\Paginator\PaginatorPropertyTrait;
 
 final class Paginator implements OffsetPaginatorInterface
 {
-    use PaginatorPropertyTrait;
 
     private QueryBuilder $query;
 
@@ -19,15 +18,22 @@ final class Paginator implements OffsetPaginatorInterface
         $this->query = $query;
     }
 
+
+    public function getCurrentPage(): int
+    {
+        $query = $this->query;
+        return ($query->getFirstResult() / $query->getMaxResults()) + 1;
+    }
+
+    public function getItemsPerPage(): int
+    {
+        return $this->query->getMaxResults();
+    }
+
     public function getIterator()
     {
         $query = $this->query;
-        $query->setFirstResult(($this->currentPage - 1) * $this->itemsPerPage);
-        $query->setMaxResults($this->itemsPerPage);
-
-        foreach ($query->getQuery()->iterate() as $row) {
-            yield current($row);
-        };
+        return $query->getQuery()->toIterable();
     }
 
     public function count()

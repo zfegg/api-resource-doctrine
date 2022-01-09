@@ -1,23 +1,18 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension;
-
-
-use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
-use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 
 interface ExtensionInterface
 {
 
     /**
-     * @param ORMQueryBuilder|DbalQueryBuilder  $query
+     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
      * @return iterable|void
      */
     public function getList($query, string $table, array $context);
 
     /**
-     * @param ORMQueryBuilder|DbalQueryBuilder  $query
+     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder $query
      * @return object|array|void
      */
     public function get($query, string $table, array $context);

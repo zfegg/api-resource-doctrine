@@ -1,9 +1,8 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\ORM;
 
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
@@ -13,11 +12,9 @@ use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
-use Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface;
-use Zfegg\ApiRestfulHandler\Exception\ApiProblem;
-use Zfegg\ApiRestfulHandler\Exception\RequestException;
 use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
 use Zfegg\ApiRestfulHandler\Resource\ResourceNotAllowedTrait;
+use Zfegg\PsrMvc\Exception\ConflictHttpException;
 
 class OrmResource implements ResourceInterface
 {
@@ -31,7 +28,7 @@ class OrmResource implements ResourceInterface
     private ?OrmResource $parent;
 
     /**
-     * @var ExtensionInterface[]
+     * @var \Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface[]
      */
     private array $extensions;
 
@@ -43,17 +40,16 @@ class OrmResource implements ResourceInterface
 
     /**
      * ORM resource constructor.
-     * @param ExtensionInterface[] $extensions
+     * @param \Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface[] $extensions
      */
     public function __construct(
         EntityManager $em,
         string $entityName,
         SerializerInterface $serializer,
-        PropertyAccessorInterface $propertyAccessor = null,
+        ?PropertyAccessorInterface $propertyAccessor = null,
         array $extensions = [],
         ?OrmResource $parent = null
-    )
-    {
+    ) {
         $this->extensions = $extensions;
         $this->em = $em;
         $this->entityName = $entityName;
@@ -87,6 +83,9 @@ class OrmResource implements ResourceInterface
         return $query->getQuery()->getResult();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id, array $context = []): void
     {
         $obj = $this->em->find($this->entityName, $id);
@@ -94,6 +93,9 @@ class OrmResource implements ResourceInterface
         $this->em->flush();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data, array $context = [])
     {
         $format = $context['format'] ?? '';
@@ -132,13 +134,16 @@ class OrmResource implements ResourceInterface
         try {
             $this->em->flush();
         } catch (UniqueConstraintViolationException $e) {
-            throw new RequestException($e->getMessage(), 409, $e);
+            throw new ConflictHttpException($e->getMessage(), $e);
         }
         $primary = current($meta->getIdentifierValues($obj));
 
         return $this->get($primary, $context);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data, array $context = [])
     {
         $format = $context['format'] ?? '';
@@ -156,11 +161,17 @@ class OrmResource implements ResourceInterface
         return $this->get($primary, $context);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data, array $context = [])
     {
         return $this->update($id, $data, $context);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id, array $context = [])
     {
         $meta = $this->em->getClassMetadata($this->entityName);
@@ -227,7 +238,7 @@ class OrmResource implements ResourceInterface
 
     public function getParentContextKey(): ?string
     {
-        if (!$this->parent) {
+        if (! $this->parent) {
             return null;
         }
 
@@ -260,7 +271,7 @@ class OrmResource implements ResourceInterface
         return $this->metadata;
     }
 
-    private function updateJoins(array &$data):void
+    private function updateJoins(array &$data): void
     {
         $meta = $this->getMetadata();
         foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
@@ -273,7 +284,7 @@ class OrmResource implements ResourceInterface
                     $collection = new ArrayCollection();
 
                     foreach ($data[$fieldName] as $item) {
-                        $ref = $this->em->getReference($mapping['targetEntity'], is_array($item) ? $item[$id]: $item);
+                        $ref = $this->em->getReference($mapping['targetEntity'], is_array($item) ? $item[$id] : $item);
                         $collection->add($ref);
                     }
 

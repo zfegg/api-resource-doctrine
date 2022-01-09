@@ -13,7 +13,7 @@
     "php": ">=7.4",
     "doctrine/dbal": "^2.2.0 || ^3.0.0",
     "zfegg/api-serializer-ext": "^0.1.1",
-    "zfegg/api-restful-handler": "^0.1.1"
+    "zfegg/api-restful-handler": "^0.2.0"
   },
   "autoload": {
     "psr-4": {
@@ -35,7 +35,7 @@
     "slevomat/coding-standard": "^6.4",
     "symfony/serializer": "^5.2",
     "laminas/laminas-servicemanager": "^3.6",
-    "roave/psr-container-doctrine": "^2.2",
+    "roave/psr-container-doctrine": "^2.2 | ^3.0",
     "zfegg/doctrine-helper": "^0.1.0",
     "symfony/property-access": "^5.2"
   },
@@ -43,5 +43,11 @@
     "doctrine/orm": "Doctrine ORM resource required",
     "symfony/property-access": "Doctrine ORM resource required",
     "symfony/serializer": "Doctrine ORM resource required"
+  },
+  "scripts": {
+    "cs-check": "phpcs",
+    "cs-fix": "phpcbf",
+    "test": "phpunit --colors=always",
+    "test-coverage": "phpunit --colors=always --coverage-clover clover.xml"
   }
 }

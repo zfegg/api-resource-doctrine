@@ -1,11 +1,7 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension;
 
-
-use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
-use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 use Zfegg\ApiResourceDoctrine\ORM\OrmResource;
 
 class SortExtension implements ExtensionInterface
@@ -32,7 +28,7 @@ class SortExtension implements ExtensionInterface
                 $config = [
                     'dir' => $config,
                 ];
-            } else if ($config === true) {
+            } elseif ($config === true) {
                 $config = [];
             }
 
@@ -57,9 +53,9 @@ class SortExtension implements ExtensionInterface
     }
 
     /**
-     * @param ORMQueryBuilder|DbalQueryBuilder  $query
+     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
      */
-    protected function sort(array $sort, $query, ?string $rootAlias)
+    protected function sort(array $sort, $query, ?string $rootAlias): void
     {
         // Normalize sortable
         $sort = $sort + $this->defaultSorts;
@@ -68,8 +64,7 @@ class SortExtension implements ExtensionInterface
                 $field = $order['field'];
                 $order = $order['dir'];
             }
-            if (
-                ! in_array($order, ['desc', 'asc', 'false']) ||
+            if (! in_array($order, ['desc', 'asc', 'false']) ||
                 ! isset($this->fields[$field])
             ) {
                 continue;

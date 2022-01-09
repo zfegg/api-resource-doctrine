@@ -1,10 +1,7 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace ZfeggTest\ApiResourceDoctrine;
 
-
-use Doctrine\DBAL\Connection;
 use Laminas\ServiceManager\ServiceManager;
 use Laminas\Stdlib\ArrayUtils;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -26,7 +23,7 @@ trait SetUpContainerTrait
         $this->container = new ServiceManager($config['dependencies']);
         $this->container->setService('config', new \ArrayObject($config));
 
-        /** @var Connection $conn */
+        /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->container->get('doctrine.connection.default');
         $userCreateSql = <<<EOT
 create table users (
@@ -40,7 +37,7 @@ EOT;
         $conn->prepare($userCreateSql)->execute();
     }
 
-    public function getConfig()
+    public function getConfig(): array
     {
         return [
             'dependencies' => [
@@ -100,5 +97,4 @@ EOT;
             ]
         ];
     }
-
 }

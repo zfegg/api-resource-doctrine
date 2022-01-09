@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\ORM;
 
@@ -101,6 +101,9 @@ final class CursorPaginator implements CursorPaginatorInterface
         return false;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getIterator()
     {
         foreach ($this->initData() as $item) {

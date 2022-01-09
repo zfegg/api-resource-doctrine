@@ -1,7 +1,6 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension;
-
 
 use Zfegg\ApiResourceDoctrine\Dbal\CursorPaginator as DbalPaginator;
 use Zfegg\ApiResourceDoctrine\ORM\CursorPaginator as ORMPaginator;

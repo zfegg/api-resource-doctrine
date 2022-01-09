@@ -1,8 +1,6 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Factory;
-
 
 use Psr\Container\ContainerInterface;
 use Zfegg\ApiResourceDoctrine\Extension\CursorPaginationExtension;
@@ -23,7 +21,7 @@ class ExtensionsFactoryFactory
                 'abstract_factories' => [
                     ExtensionAbstractFactory::class,
                 ],
-                'aliases' =>  [
+                'aliases' => [
                     'cursor_pagination' => CursorPaginationExtension::class,
                     'pagination' => PaginationExtension::class,
                     'default_query' => DefaultQueryExtension::class,

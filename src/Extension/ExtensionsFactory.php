@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension;
 
@@ -7,6 +7,9 @@ use Laminas\ServiceManager\AbstractPluginManager;
 class ExtensionsFactory extends AbstractPluginManager
 {
 
+    /**
+     * @inheritdoc
+     */
     protected $instanceOf = ExtensionInterface::class;
 
     /**

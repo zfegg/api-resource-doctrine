@@ -1,12 +1,6 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension\QueryFilter;
-
-use Doctrine\DBAL\Query\Expression\CompositeExpression;
-use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
-use Doctrine\ORM\Query\Expr\Composite;
-use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 
 class DefaultQueryFilter extends AbstractQueryFilter
 {
@@ -23,7 +17,7 @@ class DefaultQueryFilter extends AbstractQueryFilter
 
     /**
      * @param array $filter
-     * @param ORMQueryBuilder|DbalQueryBuilder  $query
+     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
      */
     protected function filter(array $params, $query): void
     {

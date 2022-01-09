@@ -1,9 +1,7 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension;
 
-
-use Doctrine\ORM\Tools\Pagination\Paginator;
 use Zfegg\ApiResourceDoctrine\Dbal\Paginator as DbalPaginator;
 use Zfegg\ApiResourceDoctrine\ORM\Paginator as ORMPaginator;
 use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
@@ -16,7 +14,6 @@ class PaginationExtension implements ExtensionInterface
 
     /**
      * PaginationExtension constructor.
-     * @param int $pageSize
      * @param int[] $pageSizeRange
      */
     public function __construct(int $pageSize = 20, array $pageSizeRange = [20, 50, 100, 200])

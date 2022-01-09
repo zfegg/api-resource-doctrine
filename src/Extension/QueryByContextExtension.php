@@ -1,11 +1,7 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension;
 
-
-use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
-use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 use Zfegg\ApiResourceDoctrine\ORM\OrmResource;
 
 class QueryByContextExtension implements ExtensionInterface

@@ -1,12 +1,6 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension\QueryFilter;
-
-use Doctrine\DBAL\Query\Expression\CompositeExpression;
-use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
-use Doctrine\ORM\Query\Expr\Composite;
-use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 
 class KendoQueryFilter extends AbstractQueryFilter
 {
@@ -16,9 +10,8 @@ class KendoQueryFilter extends AbstractQueryFilter
     public function __construct(
         array $fields,
         int $filterMaxDeep = 2,
-        NamingStrategyInterface $namingStrategy = null
-    )
-    {
+        ?NamingStrategyInterface $namingStrategy = null
+    ) {
         parent::__construct($fields, $namingStrategy);
         $this->filterMaxDeep = $filterMaxDeep;
     }
@@ -35,7 +28,7 @@ class KendoQueryFilter extends AbstractQueryFilter
 
     /**
      * @param array $filter
-     * @param ORMQueryBuilder|DbalQueryBuilder  $query
+     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
      */
     private function filter(array $filter, $query): void
     {
@@ -55,14 +48,13 @@ class KendoQueryFilter extends AbstractQueryFilter
             $nFilter = ['filters' => []];
             if (isset($filter['filters']) && is_array($filter['filters'])) {
                 $nFilter = $filter;
-            } elseif(!empty($filter)) {
+            } elseif (! empty($filter)) {
                 $nFilter['filters'] = [$filter];
             }
             $filter = $nFilter;
         }
 
-        if (
-            isset($filter['field']) &&
+        if (isset($filter['field']) &&
             isset($filter['operator']) &&
             isset($this->fields[$filter['field']]) &&
             in_array($filter['operator'], $this->fields[$filter['field']]['op'])
@@ -92,8 +84,8 @@ class KendoQueryFilter extends AbstractQueryFilter
     }
 
     /**
-     * @param ORMQueryBuilder|DbalQueryBuilder  $query
-     * @return Composite|CompositeExpression|null
+     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
+     * @return  \Doctrine\DBAL\Query\Expression\CompositeExpression|\Doctrine\ORM\Query\Expr\Composite|null
      */
     private function parseFilters(array $filter, $query, int &$paramIndex)
     {

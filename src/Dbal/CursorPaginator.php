@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Dbal;
 
@@ -16,8 +16,6 @@ final class CursorPaginator implements CursorPaginatorInterface
 
     /**
      * CursorPaginator constructor.
-     * @param QueryBuilder $query
-     * @param string $expr
      */
     public function __construct(QueryBuilder $query, string $expr)
     {
@@ -25,6 +23,9 @@ final class CursorPaginator implements CursorPaginatorInterface
         $this->expr = $expr;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getIterator()
     {
         $query = $this->query;

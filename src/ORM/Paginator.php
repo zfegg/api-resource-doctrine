@@ -1,10 +1,9 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\ORM;
 
 use Doctrine\ORM\QueryBuilder;
 use Zfegg\ApiSerializerExt\Paginator\OffsetPaginatorInterface;
-use Zfegg\ApiSerializerExt\Paginator\PaginatorPropertyTrait;
 
 final class Paginator implements OffsetPaginatorInterface
 {
@@ -30,12 +29,18 @@ final class Paginator implements OffsetPaginatorInterface
         return $this->query->getMaxResults();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getIterator()
     {
         $query = $this->query;
         return $query->getQuery()->toIterable();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function count()
     {
         if ($this->count === null) {

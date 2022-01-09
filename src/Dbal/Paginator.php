@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Dbal;
 
@@ -30,12 +30,18 @@ final class Paginator implements OffsetPaginatorInterface
         return $this->query->getMaxResults();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getIterator()
     {
         $query = $this->query;
         return $query->execute()->iterateAssociative();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function count()
     {
         if ($this->count === null) {

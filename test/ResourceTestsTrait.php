@@ -1,21 +1,15 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace ZfeggTest\ApiResourceDoctrine;
 
-
-use Zfegg\ApiResourceDoctrine\Dbal\DbalResource;
-use Zfegg\ApiResourceDoctrine\ORM\OrmResource;
+use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
 
 trait ResourceTestsTrait
 {
 
-    /**
-     * @return DbalResource|OrmResource
-     */
-    private function initResource(array $context = [])
+    private function initResource(array $context = []): ResourceInterface
     {
-        /** @var DbalResource $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('UsersResource');
         $rs = $resource->create(['name' => 'test'], $context);
         $rs = $resource->create(['name' => 'test2'], $context);
@@ -25,7 +19,7 @@ trait ResourceTestsTrait
         return $resource;
     }
 
-    public function testGetListPagination()
+    public function testGetListPagination(): void
     {
         $extensions = ['pagination' => ['pageSize' => 1],];
         $this->setConfigExtensions($extensions);
@@ -42,7 +36,7 @@ trait ResourceTestsTrait
     }
 
 
-    public function queryFilterExtensions()
+    public function queryFilterExtensions(): array
     {
         $extensions = [
             'query_filter' => [
@@ -90,7 +84,10 @@ trait ResourceTestsTrait
             'query_filter4' => [$extensions, [],],
             'query_filter5' => [$extensions5, ['name' => 'test'], 2],
             'json_api_query_filter' => [$extensions6, ['filter' => ['name' => 'test']],],
-            'kendo_query_filter' => [$extensions7, ['filter' => ['field' => 'name', 'operator' => 'eq', 'value' => 'test']],],
+            'kendo_query_filter' => [
+                $extensions7,
+                ['filter' => ['field' => 'name', 'operator' => 'eq', 'value' => 'test']],
+            ],
         ];
     }
 
@@ -99,7 +96,7 @@ trait ResourceTestsTrait
      *
      * @dataProvider queryFilterExtensions
      */
-    public function testGetListQueryFilter(array $extensions, array $query, int $count = 1)
+    public function testGetListQueryFilter(array $extensions, array $query, int $count = 1): void
     {
         $this->setConfigExtensions($extensions);
 
@@ -128,7 +125,7 @@ trait ResourceTestsTrait
      *
      * @dataProvider sortExtensions
      */
-    public function testGetListSort(array $sort, string $firstRowName)
+    public function testGetListSort(array $sort, string $firstRowName): void
     {
         $extensions = ['sort' => ['fields' => ['name' => 'desc']],];
         $this->setConfigExtensions($extensions);
@@ -146,5 +143,4 @@ trait ResourceTestsTrait
             $this->assertEquals($firstRowName, $rows[0]['name']);
         }
     }
-
 }

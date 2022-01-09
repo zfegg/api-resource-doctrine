@@ -1,10 +1,6 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension;
-
-use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
-use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 
 class DefaultQueryExtension implements ExtensionInterface
 {
@@ -28,7 +24,10 @@ class DefaultQueryExtension implements ExtensionInterface
         };
     }
 
-    public function get($query, string $table, array $context)
+    /**
+     * @inheritdoc
+     */
+    public function get($query, string $table, array $context): void
     {
         foreach ($this->entityParts as [$partName, $part]) {
             $part = (array) $part;

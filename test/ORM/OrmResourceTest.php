@@ -1,9 +1,8 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace ZfeggTest\ApiResourceDoctrine\ORM;
 
 use PHPUnit\Framework\TestCase;
-use Zfegg\ApiResourceDoctrine\ORM\OrmResource;
 use ZfeggTest\ApiResourceDoctrine\ResourceTestsTrait;
 use ZfeggTest\ApiResourceDoctrine\SetUpContainerTrait;
 use ZfeggTest\ApiResourceDoctrine\Entity\User;
@@ -13,7 +12,7 @@ class OrmResourceTest extends TestCase
     use SetUpContainerTrait;
     use ResourceTestsTrait;
 
-    private $config = [
+    private array $config = [
         'doctrine.orm-resources' => [
             'UsersResource' => [
                 'entity' => User::class,
@@ -23,7 +22,7 @@ class OrmResourceTest extends TestCase
         ],
     ];
 
-    private function setConfigExtensions(array $extensions)
+    private function setConfigExtensions(array $extensions): void
     {
         $config = $this->container->get('config');
 
@@ -38,7 +37,8 @@ class OrmResourceTest extends TestCase
 //        $resource->create(['name' => 'test2']);
 //
 ////        $result = $resource->getList(['query' => ['name' => ['eq' => 'test']]]);
-//        $result = $resource->getList(['query' => ['filter' => ['field' => 'name', 'operator' => 'eq', 'value' => 'test']]]);
+//        $result = $resource->getList([
+//            'query' => ['filter' => ['field' => 'name', 'operator' => 'eq', 'value' => 'test']]]);
 //        $this->assertCount(1, $result);
 //        $this->assertIsIterable($result);
 //
@@ -46,9 +46,9 @@ class OrmResourceTest extends TestCase
 //        $this->assertEquals('test', $row->getName());
 //    }
 
-    public function testCreateGetUpdateDelete()
+    public function testCreateGetUpdateDelete(): void
     {
-        /** @var OrmResource $resource */
+        /** @var \Zfegg\ApiRestfulHandler\Resource\ResourceInterface $resource */
         $resource = $this->container->get('UsersResource');
         $result = $resource->create(['name' => 'test']);
         $this->assertInstanceOf(User::class, $result);
@@ -70,7 +70,7 @@ class OrmResourceTest extends TestCase
     }
 
 
-    public function testDefaultQueryExtension()
+    public function testDefaultQueryExtension(): void
     {
         $extensions = [
             'default_query' => [
@@ -89,7 +89,7 @@ class OrmResourceTest extends TestCase
     }
 
 
-    public function testQueryByContextExtension()
+    public function testQueryByContextExtension(): void
     {
         $extensions = [
             'query_by_context' => [

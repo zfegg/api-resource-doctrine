@@ -1,12 +1,7 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension\QueryFilter;
 
-
-use Doctrine\DBAL\Query\Expression\CompositeExpression;
-use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
-use Doctrine\ORM\Query\Expr\Composite;
 use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 use Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface;
 
@@ -15,7 +10,7 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
     protected array $fields;
     protected array $defaultFilters = [];
 
-    private ?string $rootAlias = '';
+    private ?string $rootAlias = null;
     protected NamingStrategyInterface $namingStrategy;
 
     public function __construct(array $fields, ?NamingStrategyInterface $namingStrategy = null)
@@ -49,7 +44,6 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
                     $defaultFilters[$field][] = $filter;
                 }
             }
-
         }
 
         $this->defaultFilters = $defaultFilters;
@@ -64,7 +58,7 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
                 $config = [
                     'op' => ['eq'],
                 ];
-            } else if ($config === true) {
+            } elseif ($config === true) {
                 $config = [
                     'op' => ['eq'],
                 ];
@@ -77,8 +71,9 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
     }
 
     /**
-     * @param ORMQueryBuilder|DbalQueryBuilder  $query
-     * @return Composite|CompositeExpression
+     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
+     *
+     * @return \Doctrine\DBAL\Query\Expression\CompositeExpression|\Doctrine\ORM\Query\Expr\Composite
      */
     protected function makePredicate(array $filter, $query, int &$paramIndex)
     {
@@ -121,7 +116,10 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
         return $expr;
     }
 
-    protected function getRootAlias($query)
+    /**
+     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder $query
+     */
+    protected function getRootAlias($query): ?string
     {
         if ($this->rootAlias !== '') {
             return $this->rootAlias;

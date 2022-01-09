@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace ZfeggTest\ApiResourceDoctrine\Dbal;
 
 use PHPUnit\Framework\TestCase;
-use Zfegg\ApiResourceDoctrine\Dbal\DbalResource;
-use Zfegg\ApiResourceDoctrine\ORM\OrmResource;
 use ZfeggTest\ApiResourceDoctrine\ResourceTestsTrait;
 use ZfeggTest\ApiResourceDoctrine\SetUpContainerTrait;
 
@@ -13,7 +11,7 @@ class DbalResourceTest extends TestCase
     use SetUpContainerTrait;
     use ResourceTestsTrait;
 
-    private $config = [
+    private array $config = [
         'doctrine.dbal-resources' => [
             'UsersResource' => [
                 'table' => 'users',
@@ -25,16 +23,16 @@ class DbalResourceTest extends TestCase
     ];
 
 
-    private function setConfigExtensions(array $extensions)
+    private function setConfigExtensions(array $extensions): void
     {
         $config = $this->container->get('config');
 
         $config['doctrine.dbal-resources']['UsersResource']['extensions'] = $extensions;
     }
 
-    public function testCreateGetUpdateDelete()
+    public function testCreateGetUpdateDelete(): void
     {
-        /** @var DbalResource $resource */
+        /** @var \Zfegg\ApiRestfulHandler\Resource\ResourceInterface $resource */
         $resource = $this->container->get('UsersResource');
         $result = $resource->create(['name' => 'test']);
         $this->assertEquals('test', $result['name']);
@@ -57,7 +55,7 @@ class DbalResourceTest extends TestCase
     }
 
 
-    public function testDefaultQueryExtension()
+    public function testDefaultQueryExtension(): void
     {
         $extensions = [
             'default_query' => [
@@ -77,7 +75,7 @@ class DbalResourceTest extends TestCase
     }
 
 
-    public function testQueryByContextExtension()
+    public function testQueryByContextExtension(): void
     {
         $extensions = [
             'query_by_context' => [

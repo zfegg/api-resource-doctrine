@@ -1,12 +1,8 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Dbal;
 
-
 use Doctrine\DBAL\Driver\Statement;
-use Exception;
-use Traversable;
 
 class BaseResult implements \IteratorAggregate
 {
@@ -17,6 +13,9 @@ class BaseResult implements \IteratorAggregate
         $this->stmt = $stmt;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getIterator()
     {
         while ($row = $this->stmt->fetchAssociative()) {

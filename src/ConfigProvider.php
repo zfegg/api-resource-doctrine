@@ -1,12 +1,11 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine;
 
 class ConfigProvider
 {
 
-    public function __invoke()
+    public function __invoke(): array
     {
         return [
             'dependencies'       => [

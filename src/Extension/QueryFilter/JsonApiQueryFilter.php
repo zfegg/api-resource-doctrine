@@ -1,10 +1,6 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension\QueryFilter;
-
-use Doctrine\DBAL\Query\QueryBuilder as DbalQueryBuilder;
-use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 
 class JsonApiQueryFilter extends DefaultQueryFilter
 {

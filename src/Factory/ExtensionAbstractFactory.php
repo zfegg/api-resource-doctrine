@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Factory;
 
@@ -10,24 +10,28 @@ use ReflectionParameter;
 
 class ExtensionAbstractFactory implements AbstractFactoryInterface
 {
-    protected $aliases = [];
+    protected array $aliases = [];
 
     /**
      * @param string[] $aliases
      */
     public function __construct(array $aliases = [])
     {
-        if (! empty($aliases)) {
-            $this->aliases = $aliases;
-        }
+        $this->aliases = $aliases;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function canCreate(ContainerInterface $container, $requestedName)
     {
         return class_exists($requestedName);
     }
 
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    /**
+     * @inheritdoc
+     */
+    public function __invoke(ContainerInterface $container, $requestedName, ?array $options = null)
     {
         $reflectionClass = new ReflectionClass($requestedName);
 
@@ -48,18 +52,11 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
         return new $requestedName(...$parameters);
     }
 
-    /**
-     * Returns a callback for resolving a parameter to a value, including mapping 'config' arguments.
-     *
-     * Unlike resolveParameter(), this version will detect `$config` array
-     * arguments and have them return the 'config' service.
-     *
-     * @param ContainerInterface $container
-     * @param string $requestedName
-     * @return callable
-     */
-    private function resolveParameterWithConfigService(ContainerInterface $container, string $requestedName, array $options)
-    {
+    private function resolveParameterWithConfigService(
+        ContainerInterface $container,
+        string $requestedName,
+        array $options
+    ): callable {
         /**
          * @param ReflectionParameter $parameter
          * @return mixed
@@ -67,7 +64,7 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
          *   resolved to a service in the container.
          */
         return function (ReflectionParameter $parameter) use ($container, $requestedName, $options) {
-            $type =  $parameter->getType() ? $parameter->getType()->getName() : null;
+            $type = $parameter->getType() ? $parameter->getType()->getName() : null;
             $name = $parameter->getName();
 
             if (isset($options[$name]) && in_array($type, ['string', 'int', 'bool', 'float', 'array', null])) {
@@ -88,10 +85,9 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
     private function resolveParameter(
         ReflectionParameter $parameter,
         ContainerInterface $container,
-        $requestedName,
+        string $requestedName,
         array $options
-    )
-    {
+    ) {
         if ((! $parameter->getType()) || $parameter->getType()->isBuiltin()) {
             if (! $parameter->isDefaultValueAvailable()) {
                 throw new ServiceNotFoundException(sprintf(
@@ -108,8 +104,7 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
         $type = $parameter->getType()->getName();
         $type = isset($this->aliases[$type]) ? $this->aliases[$type] : $type;
 
-        if (
-            isset($options[$parameter->getName()])
+        if (isset($options[$parameter->getName()])
             && is_string($options[$parameter->getName()])
             && $container->has($options[$parameter->getName()])
         ) {

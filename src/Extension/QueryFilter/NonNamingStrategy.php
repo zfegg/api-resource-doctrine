@@ -1,8 +1,6 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension\QueryFilter;
-
 
 class NonNamingStrategy implements NamingStrategyInterface
 {

@@ -1,22 +1,19 @@
-<?php
-
+<?php declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Dbal;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Symfony\Component\Serializer\Serializer;
-use Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface;
 use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
 use Zfegg\ApiRestfulHandler\Resource\ResourceNotAllowedTrait;
-
 
 class DbalResource implements ResourceInterface
 {
     use ResourceNotAllowedTrait;
 
     /**
-     * @var ExtensionInterface[]
+     * @var \Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface[]
      */
     private array $extensions;
 
@@ -33,7 +30,7 @@ class DbalResource implements ResourceInterface
 
     /**
      * Dbal resource constructor.
-     * @param ExtensionInterface[] $extensions
+     * @param \Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface[] $extensions
      */
     public function __construct(
         Connection $connection,
@@ -44,8 +41,7 @@ class DbalResource implements ResourceInterface
         ?string $parentContextKey = null,
         ?Serializer $serializer = null,
         ?string $entityName = null
-    )
-    {
+    ) {
         $this->conn = $connection;
         $this->table = $table;
         $this->primary = $primary;
@@ -90,6 +86,9 @@ class DbalResource implements ResourceInterface
         }
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($id, array $context = []): void
     {
         $conn = $this->conn;
@@ -100,6 +99,9 @@ class DbalResource implements ResourceInterface
         $conn->delete($table, $criteria);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function create($data, array $context = [])
     {
         $conn = $this->conn;
@@ -127,6 +129,9 @@ class DbalResource implements ResourceInterface
         return $this->get($conn->lastInsertId(), $context);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function update($id, $data, array $context = [])
     {
         $conn = $this->conn;
@@ -154,11 +159,17 @@ class DbalResource implements ResourceInterface
         return $this->get($id);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($id, $data, array $context = [])
     {
         return $this->update($id, $data, $context);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($id, array $context = [])
     {
         $conn = $this->conn;
@@ -224,7 +235,7 @@ class DbalResource implements ResourceInterface
 
     public function getParentContextKey(): ?string
     {
-        if (!$this->parent) {
+        if (! $this->parent) {
             return null;
         }
 

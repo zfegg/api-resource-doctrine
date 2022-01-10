@@ -2,7 +2,7 @@
 
 namespace Zfegg\ApiResourceDoctrine\Dbal;
 
-use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\Statement;
 
 class BaseResult implements \IteratorAggregate
 {
@@ -18,7 +18,8 @@ class BaseResult implements \IteratorAggregate
      */
     public function getIterator()
     {
-        while ($row = $this->stmt->fetchAssociative()) {
+        $result = $this->stmt->executeQuery();
+        while ($row = $result->fetchAssociative()) {
             yield $row;
         }
     }

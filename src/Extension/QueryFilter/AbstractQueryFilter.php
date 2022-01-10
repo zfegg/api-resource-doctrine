@@ -121,7 +121,7 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
      */
     protected function getRootAlias($query): ?string
     {
-        if ($this->rootAlias !== '') {
+        if ($this->rootAlias !== null) {
             return $this->rootAlias;
         }
 

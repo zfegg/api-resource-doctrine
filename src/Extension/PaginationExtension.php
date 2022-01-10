@@ -28,7 +28,7 @@ class PaginationExtension implements ExtensionInterface
     public function getList($query, string $table, array $context)
     {
         $page = $context['query']['page'] ?? 1;
-        $pageSize = $this->getAllowedPageSize($context['query']['page_size'] ?? null);
+        $pageSize = $this->getAllowedPageSize((int)($context['query']['page_size'] ?? 0));
 
         $query->setFirstResult(($page - 1) * $pageSize);
         $query->setMaxResults($pageSize);
@@ -39,7 +39,7 @@ class PaginationExtension implements ExtensionInterface
         return $paginator;
     }
 
-    protected function getAllowedPageSize(?int $pageSize): int
+    protected function getAllowedPageSize(int $pageSize): int
     {
         if (in_array($pageSize, $this->pageSizeRange)) {
             return $pageSize;

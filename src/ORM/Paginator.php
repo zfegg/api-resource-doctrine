@@ -35,7 +35,9 @@ final class Paginator implements OffsetPaginatorInterface
     public function getIterator()
     {
         $query = $this->query;
-        return $query->getQuery()->toIterable();
+        foreach ($query->getQuery()->iterate() as $row) {
+            yield current($row);
+        }
     }
 
     /**

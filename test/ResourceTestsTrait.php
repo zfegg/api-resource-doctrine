@@ -39,6 +39,7 @@ trait ResourceTestsTrait
     public function queryFilterExtensions(): array
     {
         $extensions = [
+            'pagination' => [],
             'query_filter' => [
                 'fields' => [
                     'name' => [
@@ -69,6 +70,7 @@ trait ResourceTestsTrait
             ],
         ];
         $extensions7 = [
+            'pagination' => [],
             'kendo_query_filter' => [
                 'fields' => [
                     'name' => [
@@ -78,7 +80,7 @@ trait ResourceTestsTrait
             ],
         ];
         return [
-            'query_filter1' => [$extensions, ['name' => 'test'],],
+            'query_filter1' => [$extensions, ['name' => 'test', 'page_size' => '1'],],
             'query_filter2' => [$extensions, ['name' => ['eq' => 'test']],],
             'query_filter3' => [$extensions, ['name' => ['neq' => 'test']], 3],
             'query_filter4' => [$extensions, [],],
@@ -86,7 +88,10 @@ trait ResourceTestsTrait
             'json_api_query_filter' => [$extensions6, ['filter' => ['name' => 'test']],],
             'kendo_query_filter' => [
                 $extensions7,
-                ['filter' => ['field' => 'name', 'operator' => 'eq', 'value' => 'test']],
+                [
+                    'filter' => ['field' => 'name', 'operator' => 'eq', 'value' => 'test'],
+                    'page_size' => '1',
+                ],
             ],
         ];
     }

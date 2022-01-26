@@ -36,7 +36,8 @@ class OrmResourceAbstractFactory implements AbstractFactoryInterface
                 ? $container->get(PropertyAccessorInterface::class)
                 : null,
             $extensions,
-            isset($config['parent']) ? $container->get($config['parent']) : null
+            isset($config['parent']) ? $container->get($config['parent']) : null,
+            $config['parent_context_key'] ?? null,
         );
     }
 }

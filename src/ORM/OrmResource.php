@@ -48,7 +48,8 @@ class OrmResource implements ResourceInterface
         SerializerInterface $serializer,
         ?PropertyAccessorInterface $propertyAccessor = null,
         array $extensions = [],
-        ?OrmResource $parent = null
+        ?OrmResource $parent = null,
+        ?string $parentContextKey = null
     ) {
         $this->extensions = $extensions;
         $this->em = $em;
@@ -56,6 +57,7 @@ class OrmResource implements ResourceInterface
         $this->serializer = $serializer;
         $this->parent = $parent;
         $this->propertyAccessor = $propertyAccessor ?: PropertyAccess::createPropertyAccessor();
+        $this->parentContextKey = $parentContextKey;
     }
 
     public function getList(array $context = []): iterable

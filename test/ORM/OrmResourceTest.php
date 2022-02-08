@@ -87,23 +87,4 @@ class OrmResourceTest extends TestCase
         $this->assertIsIterable($result);
         $this->assertCount(1, $result);
     }
-
-
-    public function testQueryByContextExtension(): void
-    {
-        $extensions = [
-            'query_by_context' => [
-                'fields' => ['name']
-            ]
-        ];
-        $this->setConfigExtensions($extensions);
-
-        $context = ['name' => 'aaa'];
-
-        $resource = $this->initResource($context);
-
-        $result = $resource->getList($context);
-        $this->assertIsIterable($result);
-        $this->assertCount(1, $result);
-    }
 }

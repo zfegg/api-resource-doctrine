@@ -51,7 +51,7 @@ class DbalResourceTest extends TestCase
         $resource->delete($id);
 
         $result = $resource->get($id);
-        $this->assertFalse($result);
+        $this->assertNull($result);
     }
 
 
@@ -69,25 +69,6 @@ class DbalResourceTest extends TestCase
         $resource = $this->initResource();
 
         $result = $resource->getList();
-        $this->assertIsIterable($result);
-        $rows = iterator_to_array($result);
-        $this->assertCount(1, $rows);
-    }
-
-
-    public function testQueryByContextExtension(): void
-    {
-        $extensions = [
-            'query_by_context' => [
-                'fields' => ['name']
-            ]
-        ];
-        $this->setConfigExtensions($extensions);
-
-        $context = ['name' => 'aaa'];
-        $resource = $this->initResource($context);
-
-        $result = $resource->getList($context);
         $this->assertIsIterable($result);
         $rows = iterator_to_array($result);
         $this->assertCount(1, $rows);

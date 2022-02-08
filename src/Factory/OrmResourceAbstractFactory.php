@@ -32,9 +32,7 @@ class OrmResourceAbstractFactory implements AbstractFactoryInterface
             $container->get($config['entity_manager'] ?? 'doctrine.entity_manager.default'),
             $config['entity'],
             $container->get($config['serializer'] ?? SerializerInterface::class),
-            $container->has(PropertyAccessorInterface::class)
-                ? $container->get(PropertyAccessorInterface::class)
-                : null,
+            $config['denormalization_context'] ?? [],
             $extensions,
             isset($config['parent']) ? $container->get($config['parent']) : null,
             $config['parent_context_key'] ?? null,

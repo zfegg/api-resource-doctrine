@@ -30,9 +30,20 @@ create table users (
   id INTEGER
   constraint users_pk
   primary key autoincrement,
-  name text
+  name text,
+  status integer default 1
 );
 create unique index users_name_uindex on users (name);
+create table foo (
+  id INTEGER constraint foo_pk primary key autoincrement,
+  name text,
+  user_id integer 
+);
+create table bar (
+  id INTEGER constraint bar_pk primary key autoincrement,
+  name text,
+  foo_id integer 
+);
 EOT;
         $conn->prepare($userCreateSql)->execute();
     }
@@ -81,9 +92,15 @@ EOT;
                             __DIR__ . '/Entity',
                         ],
                     ],
+                    'attribute' => [
+                        'class' => \Doctrine\ORM\Mapping\Driver\AttributeDriver::class,
+                        'paths' => [
+                            __DIR__ . '/Entity',
+                        ],
+                    ],
                     'default' => [
                         'class' => \Doctrine\Persistence\Mapping\Driver\MappingDriverChain::class,
-                        'default_driver' => 'annotation',
+                        'default_driver' => 'attribute',
                         'drivers' => [
                         ],
                     ],

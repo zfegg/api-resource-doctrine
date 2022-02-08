@@ -57,7 +57,7 @@ class DbalResource implements ResourceInterface
         $conn = $this->conn;
         $table = $conn->quoteIdentifier($this->table);
         $query = $conn->createQueryBuilder();
-        $query->select('*')->from($table);
+        $query->select('*')->from($table, 'o');
 
         $this->joinParent($query, $context);
 
@@ -76,20 +76,23 @@ class DbalResource implements ResourceInterface
         $stmt = $query->execute();
 
         if ($this->serializer) {
-            while ($row = $stmt->fetchAssociative()) {
-                yield $this->serializer->denormalize($row, $this->entityName);
-            }
-        } else {
-            while ($row = $stmt->fetchAssociative()) {
-                yield $row;
-            }
+            return $this->denormalize($stmt);
+        }
+
+        return $stmt;
+    }
+
+    private function denormalize(iterable $stmt): iterable
+    {
+        foreach ($stmt as $row) {
+            yield $this->serializer->denormalize($row, $this->entityName);
         }
     }
 
     /**
      * @inheritdoc
      */
-    public function delete($id, array $context = []): void
+    public function delete(int|string $id, array $context = []): void
     {
         $conn = $this->conn;
         $table = $conn->quoteIdentifier($this->table);
@@ -102,7 +105,7 @@ class DbalResource implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function create($data, array $context = [])
+    public function create(object|array $data, array $context = []): object|array
     {
         $conn = $this->conn;
         $table = $conn->quoteIdentifier($this->table);
@@ -132,7 +135,7 @@ class DbalResource implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function update($id, $data, array $context = [])
+    public function update(int|string $id, object|array $data, array $context = []): object|array
     {
         $conn = $this->conn;
         $table = $conn->quoteIdentifier($this->table);
@@ -162,7 +165,7 @@ class DbalResource implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function patch($id, $data, array $context = [])
+    public function patch(int|string $id, object|array $data, array $context = []): object|array
     {
         return $this->update($id, $data, $context);
     }
@@ -170,7 +173,7 @@ class DbalResource implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function get($id, array $context = [])
+    public function get(int|string $id, array $context = []): array|object|null
     {
         $conn = $this->conn;
         $table = $conn->quoteIdentifier($this->table);
@@ -178,7 +181,7 @@ class DbalResource implements ResourceInterface
 
         $query = $this->conn->createQueryBuilder();
         $query->select('*')
-            ->from($table)
+            ->from($table, 'o')
             ->where(
                 $query->expr()->eq($primary, ":primary")
             )
@@ -199,7 +202,7 @@ class DbalResource implements ResourceInterface
             return $result;
         }
 
-        return $query->execute()->fetchAssociative();
+        return $query->execute()->fetchAssociative() ?: null;
     }
 
 
@@ -209,19 +212,22 @@ class DbalResource implements ResourceInterface
         $curResource = $this;
         $tableAlias = 'o';
         $p = 0;
+        $join = null;
 
         while ($parentResource) {
             $key = $curResource->getParentContextKey();
-            $join = "$tableAlias.$key";
-            $query->andWhere($query->expr()->eq($this->conn->quoteIdentifier($key), ":$key"));
+            $field = "$tableAlias.$key";
+            $query->andWhere($query->expr()->eq($this->conn->quoteIdentifier($field), ":$key"));
             $query->setParameter($key, $context[$key]);
 
-            if ($curResource !== $this) {
-                $tableAlias = "p$p";
-                $query->join($join, $this->parent->table, $tableAlias);
+            if ($p) {
+                $joinTableAlias = "p$p";
+                $joinField = "$joinTableAlias.{$curResource->primary}";
+                $query->join($tableAlias, $join, $joinTableAlias, "$field = $joinField");
             }
 
             $p++;
+            $join = $parentResource->table;
             $curResource = $parentResource;
             $parentResource = $parentResource->parent;
         }

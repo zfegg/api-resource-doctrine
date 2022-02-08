@@ -59,7 +59,7 @@ final class Paginator implements OffsetPaginatorInterface
                     ->from($countQuery);
             }
 
-            $this->count = $countQuery->execute()->fetchOne();
+            $this->count = (int)$countQuery->execute()->fetchOne();
         }
 
         return $this->count;

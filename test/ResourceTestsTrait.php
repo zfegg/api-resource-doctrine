@@ -28,7 +28,6 @@ trait ResourceTestsTrait
 
         $result = $resource->getList();
         $this->assertCount(4, $result);
-        $this->assertIsIterable($result);
 
         $rows = iterator_to_array($result);
 
@@ -137,15 +136,34 @@ trait ResourceTestsTrait
 
         $resource = $this->initResource();
 
-        $result = $resource->getList(['query' => ['sort' => $sort]]);
-        $this->assertIsIterable($result);
-        if (is_array($result)) {
-            $rows = $result;
-            $this->assertEquals($firstRowName, $rows[0]->getName());
-        } else {
-            $rows = iterator_to_array($result);
-            $this->assertCount(4, $rows);
-            $this->assertEquals($firstRowName, $rows[0]['name']);
+        $rows = $resource->getList(['query' => ['sort' => $sort]]);
+        if (! is_array($rows)) {
+            $rows = iterator_to_array($rows);
         }
+
+        $this->assertCount(4, $rows);
+        if (is_array($rows[0])) {
+            $this->assertEquals($firstRowName, $rows[0]['name']);
+        } else {
+            $this->assertEquals($firstRowName, $rows[0]->getName());
+        }
+    }
+
+
+    public function testQueryByContextExtension(): void
+    {
+        $extensions = [
+            'query_by_context' => [
+                'fields' => ['status']
+            ]
+        ];
+        $this->setConfigExtensions($extensions);
+
+        $context = ['status' => '1'];
+        $resource = $this->initResource($context);
+
+        $result = $resource->getList($context);
+        $rows = iterator_to_array($result);
+        $this->assertCount(4, $rows);
     }
 }

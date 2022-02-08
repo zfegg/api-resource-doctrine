@@ -4,11 +4,9 @@ namespace Zfegg\ApiResourceDoctrine\ORM;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\QueryBuilder;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -22,42 +20,32 @@ class OrmResource implements ResourceInterface
 
     public const ROOT_ALIAS = '__QUERY_ROOT_ALIAS__';
 
-    private EntityManager $em;
-    private string $entityName;
+    private ?array $parentMapping = null;
 
-    private ?OrmResource $parent;
-
-    /**
-     * @var \Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface[]
-     */
-    private array $extensions;
-
-    private SerializerInterface $serializer;
-    private ?string $parentContextKey = null;
-    private ?array $associationMapping = null;
-    private ?ClassMetadataInfo $metadata = null;
-    private PropertyAccessorInterface $propertyAccessor;
+    private array $creationContext;
+    private array $mutationContext;
 
     /**
      * ORM resource constructor.
      * @param \Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface[] $extensions
      */
     public function __construct(
-        EntityManager $em,
-        string $entityName,
-        SerializerInterface $serializer,
-        ?PropertyAccessorInterface $propertyAccessor = null,
-        array $extensions = [],
-        ?OrmResource $parent = null,
-        ?string $parentContextKey = null
+        private EntityManagerInterface $em,
+        private string $entityName,
+        private SerializerInterface $serializer,
+        array $denormalizationContext = [],
+        private array $extensions = [],
+        private ?OrmResource $parent = null,
+        private ?string $parentContextKey = null
     ) {
-        $this->extensions = $extensions;
-        $this->em = $em;
-        $this->entityName = $entityName;
-        $this->serializer = $serializer;
-        $this->parent = $parent;
-        $this->propertyAccessor = $propertyAccessor ?: PropertyAccess::createPropertyAccessor();
-        $this->parentContextKey = $parentContextKey;
+        $this->creationContext = ($denormalizationContext['creation'] ?? []) + $denormalizationContext;
+        $this->mutationContext = ($denormalizationContext['mutation'] ?? []) + $denormalizationContext;
+        unset(
+            $this->creationContext['creation'],
+            $this->creationContext['mutation'],
+            $this->mutationContext['creation'],
+            $this->mutationContext['mutation'],
+        );
     }
 
     public function getList(array $context = []): iterable
@@ -82,54 +70,67 @@ class OrmResource implements ResourceInterface
             return $result;
         }
 
-        return $query->getQuery()->getResult();
+        return $query->getQuery()->toIterable();
     }
 
     /**
      * @inheritdoc
      */
-    public function delete($id, array $context = []): void
+    public function delete(int|string $id, array $context = []): void
     {
         $obj = $this->em->find($this->entityName, $id);
         $this->em->remove($obj);
         $this->em->flush();
     }
 
+    private function addFieldsByContext(array $context, array &$data): void
+    {
+        if (isset($context['add_fields'])) {
+            foreach ($context['add_fields'] as $setFieldKey => $fromContextKey) {
+                if (is_int($setFieldKey)) {
+                    $setFieldKey = $fromContextKey;
+                }
+
+                $data[$setFieldKey] = $context[$fromContextKey];
+            }
+        }
+    }
+
     /**
      * @inheritdoc
      */
-    public function create($data, array $context = [])
+    public function create(object|array $data, array $context = []): object|array
     {
         $format = $context['format'] ?? '';
         $context[self::ROOT_ALIAS] = 'o';
 
-        $associationFields = [];
-
         if ($this->parent) {
-            $mapping = $this->getAssociationMapping();
-            $val = $context[$this->getParentContextKey()];
-            $associationFields[$mapping['fieldName']] = $this->em->getReference($this->parent->entityName, $val);
+            $mapping = $this->getParentMapping();
+            $data[$mapping['fieldName']] = $context[$this->getParentContextKey()];
         }
+
+        $context = $context + $this->creationContext;
+        $this->addFieldsByContext($context, $data);
 
         $meta = $this->getMetadata();
         foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
             if (isset($mapping['joinColumns'])) {
                 $column = $mapping["joinColumns"][0]["name"];
                 if (isset($data[$column]) && (is_string($data[$column]) || is_numeric($data[$column]))) {
-                    $associationFields[$fieldName] = $this->em->getReference($mapping['targetEntity'], $data[$column]);
+                    $data[$fieldName] = $data[$column];
                     unset($data[$column]);
-                    continue;
                 }
             }
         }
 
         $this->updateJoins($data);
 
-        $obj = $this->serializer->denormalize($data, $this->entityName, $format, $context);
-
-        foreach ($associationFields as $key => $val) {
-            $this->propertyAccessor->setValue($obj, $key, $val);
-        }
+        $obj = $this->serializer->denormalize(
+            $data,
+            $meta->getName(),
+            $format,
+            $context,
+        );
 
         $this->em->persist($obj);
 
@@ -146,15 +147,25 @@ class OrmResource implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function update($id, $data, array $context = [])
+    public function update(int|string $id, object|array $data, array $context = []): object|array
     {
         $format = $context['format'] ?? '';
         $obj = $this->em->find($this->entityName, $id);
+
+        $meta = $this->getMetadata();
+        $context = $context + $this->mutationContext;
         $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $obj;
         $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
 
+        $this->addFieldsByContext($context, $data);
+
         $this->updateJoins($data);
-        $this->serializer->denormalize($data, $this->entityName, $format, $context);
+        $this->serializer->denormalize(
+            $data,
+            $meta->getName(),
+            $format,
+            $context,
+        );
 
         $this->em->persist($obj);
         $this->em->flush();
@@ -166,7 +177,7 @@ class OrmResource implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function patch($id, $data, array $context = [])
+    public function patch(int|string $id, object|array $data, array $context = []): object|array
     {
         return $this->update($id, $data, $context);
     }
@@ -174,7 +185,7 @@ class OrmResource implements ResourceInterface
     /**
      * @inheritdoc
      */
-    public function get($id, array $context = [])
+    public function get(int|string $id, array $context = []): array|object|null
     {
         $meta = $this->em->getClassMetadata($this->entityName);
 
@@ -215,19 +226,21 @@ class OrmResource implements ResourceInterface
         $curResource = $this;
         $tableAlias = 'o';
         $p = 0;
+        $nextJoin = null;
 
         while ($parentResource) {
-            $curMapping = $curResource->getAssociationMapping();
-            $join = "$tableAlias.{$curMapping['fieldName']}";
+            $curMapping = $curResource->getParentMapping();
+            $field = "$tableAlias.{$curMapping['fieldName']}";
             $key = $curResource->getParentContextKey();
-            $query->andWhere($query->expr()->eq("IDENTITY($join)", ":$key"));
+            $query->andWhere($query->expr()->eq("IDENTITY($field)", ":$key"));
             $query->setParameter($key, $context[$curResource->getParentContextKey()]);
-            if ($curResource !== $this) {
-                $tableAlias = "p$p";
-                $query->join($join, 'p');
+            if ($p) {
+                $query->join($nextJoin, $tableAlias);
             }
 
             $p++;
+            $tableAlias = "p$p";
+            $nextJoin = $field;
             $curResource = $parentResource;
             $parentResource = $parentResource->parent;
         }
@@ -248,29 +261,25 @@ class OrmResource implements ResourceInterface
             return $this->parentContextKey;
         }
 
-        $this->parentContextKey = $this->getAssociationMapping()['joinColumns'][0]['name'];
+        $this->parentContextKey = $this->getParentMapping()['joinColumns'][0]['name'];
 
         return $this->parentContextKey;
     }
 
-    private function getAssociationMapping(): ?array
+    private function getParentMapping(): ?array
     {
-        if (! $this->associationMapping) {
+        if (! $this->parentMapping) {
             $mappings = $this->getMetadata()
                 ->getAssociationsByTargetClass($this->parent->entityName);
-            $this->associationMapping = current($mappings);
+            $this->parentMapping = current($mappings);
         }
 
-        return $this->associationMapping;
+        return $this->parentMapping;
     }
 
     private function getMetadata(): ClassMetadataInfo
     {
-        if (! $this->metadata) {
-            $this->metadata = $this->em->getClassMetadata($this->entityName);
-        }
-
-        return $this->metadata;
+        return $this->em->getClassMetadata($this->entityName);
     }
 
     private function updateJoins(array &$data): void
@@ -291,7 +300,6 @@ class OrmResource implements ResourceInterface
                     }
 
                     $data[$fieldName] = $collection;
-                    continue;
                 }
             }
         }

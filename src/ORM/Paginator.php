@@ -3,6 +3,7 @@
 namespace Zfegg\ApiResourceDoctrine\ORM;
 
 use Doctrine\ORM\QueryBuilder;
+use IteratorIterator;
 use Zfegg\ApiSerializerExt\Paginator\OffsetPaginatorInterface;
 
 final class Paginator implements OffsetPaginatorInterface
@@ -34,10 +35,7 @@ final class Paginator implements OffsetPaginatorInterface
      */
     public function getIterator()
     {
-        $query = $this->query;
-        foreach ($query->getQuery()->iterate() as $row) {
-            yield current($row);
-        }
+        return new IteratorIterator($this->query->getQuery()->toIterable());
     }
 
     /**

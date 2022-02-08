@@ -4,7 +4,6 @@ namespace Zfegg\ApiResourceDoctrine\Factory;
 
 use Interop\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\AbstractFactoryInterface;
-use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Zfegg\ApiResourceDoctrine\ORM\OrmResource;
 use Zfegg\ApiResourceDoctrine\Extension\ExtensionsFactory;

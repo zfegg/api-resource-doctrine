@@ -17,6 +17,7 @@ trait SetUpContainerTrait
     protected function setUp(): void
     {
         $config = (new ConfigProvider())();
+        $config = ArrayUtils::merge($config, (new \Zfegg\DoctrineHelper\ConfigProvider())());
         $config = ArrayUtils::merge($config, $this->getConfig());
         $config = ArrayUtils::merge($config, $this->config);
 

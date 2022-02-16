@@ -17,7 +17,7 @@ class CursorPaginationExtension extends PaginationExtension
         $class = $query instanceof ORMQueryBuilder ? ORMPaginator::class : DbalPaginator::class;
         $paginator = new $class($query);
         $paginator->setCursor($context['query']['cursor'] ?? null);
-        $paginator->setItemsPerPage($this->getAllowedPageSize($context['query']['page_size'] ?? null));
+        $paginator->setItemsPerPage($this->getAllowedPageSize((int)($context['query']['page_size'] ?? 0)));
 
         return $paginator;
     }

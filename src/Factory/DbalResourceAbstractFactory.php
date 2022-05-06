@@ -29,10 +29,11 @@ class DbalResourceAbstractFactory implements AbstractFactoryInterface
         return new DbalResource(
             $container->get($config['connection'] ?? 'doctrine.connection.default'),
             $config['table'],
-            $config['primary'],
+            $config['primary'] ?? 'id',
             $extensions,
             isset($config['parent']) ? $container->get($config['parent']) : null,
             $config['parent_context_key'] ?? null,
+            $config['types'] ?? [],
         );
     }
 }

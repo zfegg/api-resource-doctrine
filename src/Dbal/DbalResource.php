@@ -4,6 +4,7 @@ namespace Zfegg\ApiResourceDoctrine\Dbal;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Result;
 use Symfony\Component\Serializer\Serializer;
 use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
 use Zfegg\ApiRestfulHandler\Resource\ResourceNotAllowedTrait;
@@ -26,8 +27,6 @@ class DbalResource implements ResourceInterface
     private ?string $parentContextKey;
     private ?Serializer $serializer;
 
-    private ?string $entityName;
-
     /**
      * Dbal resource constructor.
      * @param \Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface[] $extensions
@@ -35,12 +34,11 @@ class DbalResource implements ResourceInterface
     public function __construct(
         Connection $connection,
         string $table,
-        string $primary,
+        string $primary = 'id',
         array $extensions = [],
         ?ResourceInterface $parent = null,
         ?string $parentContextKey = null,
-        ?Serializer $serializer = null,
-        ?string $entityName = null
+        private array $types = []
     ) {
         $this->conn = $connection;
         $this->table = $table;
@@ -48,8 +46,6 @@ class DbalResource implements ResourceInterface
         $this->extensions = $extensions;
         $this->parent = $parent;
         $this->parentContextKey = $parentContextKey;
-        $this->serializer = $serializer;
-        $this->entityName = $entityName;
     }
 
     public function getList(array $context = []): iterable
@@ -73,20 +69,26 @@ class DbalResource implements ResourceInterface
             return $result;
         }
 
-        $stmt = $query->execute();
+        $result = $query->executeQuery();
 
-        if ($this->serializer) {
-            return $this->denormalize($stmt);
-        }
-
-        return $stmt;
+        return $this->convertRows($result);
     }
 
-    private function denormalize(iterable $stmt): iterable
+    private function convertRows(Result $result): iterable
     {
-        foreach ($stmt as $row) {
-            yield $this->serializer->denormalize($row, $this->entityName);
+        foreach ($result->iterateAssociative() as $row) {
+            yield $this->convertTypes($row);
         }
+    }
+
+    private function convertTypes(array $row): array
+    {
+        foreach ($this->types as $key => $type) {
+            if (isset($row[$key])) {
+                $row[$key] = $this->conn->convertToPHPValue($row[$key], $type);
+            }
+        }
+        return $row;
     }
 
     /**
@@ -126,8 +128,8 @@ class DbalResource implements ResourceInterface
             $params[] = $context[$key];
         }
 
-        $qb->setParameters($params);
-        $qb->execute();
+        $qb->setParameters($params, $this->types);
+        $qb->executeStatement();
 
         return $this->get($conn->lastInsertId(), $context);
     }
@@ -156,10 +158,10 @@ class DbalResource implements ResourceInterface
             );
         $this->joinParent($qb, $context);
 
-        $qb->setParameters($values);
-        $qb->execute();
+        $qb->setParameters($values, $this->types);
+        $qb->executeStatement();
 
-        return $this->get($id);
+        return $this->get($id, $context);
     }
 
     /**
@@ -202,7 +204,11 @@ class DbalResource implements ResourceInterface
             return $result;
         }
 
-        return $query->execute()->fetchAssociative() ?: null;
+        if ($result = $query->executeQuery()->fetchAssociative()) {
+            return $this->convertTypes($result);
+        }
+
+        return null;
     }
 
 

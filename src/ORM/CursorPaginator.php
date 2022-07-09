@@ -74,8 +74,9 @@ final class CursorPaginator implements CursorPaginatorInterface
             }
             $prevQuery->setMaxResults($this->itemsPerPage);
             $prevCursor = $prevQuery->getQuery()->getSingleColumnResult();
+            $prevCursor = $prevCursor ? array_pop($prevCursor) : null;
 
-            $this->prevCursor = $prevCursor ? array_pop($prevCursor) : null;
+            $this->prevCursor = $prevCursor ? (int) $prevCursor : null;
         }
 
         return $this->data;

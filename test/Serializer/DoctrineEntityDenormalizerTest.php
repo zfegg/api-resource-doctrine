@@ -1,8 +1,7 @@
-<?php
+<?php declare(strict_types = 1);
 
 namespace ZfeggTest\ApiResourceDoctrine\Serializer;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Zfegg\ApiResourceDoctrine\Serializer\DoctrineEntityDenormalizer;
 use PHPUnit\Framework\TestCase;
 use Zfegg\DoctrineHelper\ContainerManagerRegistry;

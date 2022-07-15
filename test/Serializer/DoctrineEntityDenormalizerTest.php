@@ -15,15 +15,25 @@ class DoctrineEntityDenormalizerTest extends TestCase
     private array $config = [
     ];
 
-    public function testDenormalize(): void
+    public function context()
+    {
+        return [
+            [['entity_manager' => 'default']],
+            []
+        ];
+    }
+
+    /**
+     * @dataProvider context
+     */
+    public function testDenormalize(array $context = []): void
     {
         $denormalizer = new DoctrineEntityDenormalizer($this->container->get(ContainerManagerRegistry::class));
-
         $data = 1;
         $type = User::class;
 
-        $this->assertTrue($denormalizer->supportsDenormalization($data, $type));
-        $rs = $denormalizer->denormalize($data, $type);
+        $this->assertTrue($denormalizer->supportsDenormalization($data, $type, null, $context));
+        $rs = $denormalizer->denormalize($data, $type, null, $context);
         $this->assertInstanceOf(User::class, $rs);
         $this->assertEquals($data, $rs->getId());
     }

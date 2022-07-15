@@ -31,10 +31,16 @@ class DoctrineEntityDenormalizer implements DenormalizerInterface
             if (isset($this->entityMaps[$type])) {
                 return true;
             }
+            if (isset($context['entity_manager'])) {
+                $this->entityMaps[$type] = $context['entity_manager'];
+                return true;
+            }
+
             foreach ($this->doctrine->getManagerNames() as $name => $id) {
                 $manager = $this->doctrine->getManager($name);
-
-                if ($manager->getClassMetadata($type)) {
+                $factory = $manager->getMetadataFactory();
+                $factory->getAllMetadata();
+                if ($factory->hasMetadataFor($type)) {
                     $this->entityMaps[$type] = $name;
                     return true;
                 }

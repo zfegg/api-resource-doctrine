@@ -34,7 +34,7 @@ class KendoQueryFilter extends AbstractQueryFilter
     {
         $filter = $this->normalizeFilters($filter);
 
-        $paramIndex = 1;
+        $paramIndex = 0;
 
         if ($predicate = $this->parseFilters($filter, $query, $paramIndex)) {
             $query->andWhere($predicate);

@@ -32,7 +32,8 @@ class KendoQueryFilter extends AbstractQueryFilter
      */
     private function filter(array $filter, $query): void
     {
-        $filter = $this->normalizeFilters($filter);
+        $defaultFilters = $this->defaultFilters;
+        $filter = $this->normalizeFilters($filter, $defaultFilters);
 
         $paramIndex = 0;
 
@@ -41,9 +42,8 @@ class KendoQueryFilter extends AbstractQueryFilter
         }
     }
 
-    private function normalizeFilters(array $filter, int $deep = 0): ?array
+    private function normalizeFilters(array $filter, array &$defaultFilters, int $deep = 0): ?array
     {
-        $defaultFilters = $this->defaultFilters;
         if ($deep == 0) {
             $nFilter = ['filters' => []];
             if (isset($filter['filters']) && is_array($filter['filters'])) {
@@ -66,7 +66,7 @@ class KendoQueryFilter extends AbstractQueryFilter
         } elseif (isset($filter['filters']) && is_array($filter['filters']) && $deep < $this->filterMaxDeep) {
             $filters = [];
             foreach ($filter['filters'] as $subFilter) {
-                if ($subFilter = $this->normalizeFilters($subFilter, $deep + 1)) {
+                if ($subFilter = $this->normalizeFilters($subFilter, $defaultFilters, $deep + 1)) {
                     $key = $subFilter['field'] . '#' . $subFilter['operator'];
                     $filters[$key] = $subFilter;
                 }

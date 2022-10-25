@@ -47,7 +47,7 @@ final class Paginator implements OffsetPaginatorInterface
         if ($this->count === null) {
             $countQuery = clone $this->query;
             $countQuery->setMaxResults(null);
-            $countQuery->setFirstResult(null);
+            $countQuery->setFirstResult(0);
             if (! count($countQuery->getQueryPart('groupBy'))) {
                 $countQuery->select('count(*)');
                 $countQuery->resetQueryPart('orderBy');

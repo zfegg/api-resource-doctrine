@@ -19,19 +19,22 @@ class QueryByContextExtension implements ExtensionInterface
     public function getList($query, string $table, array $context)
     {
         $rootAlias = $context[OrmResource::ROOT_ALIAS] ?? null;
-        foreach ($this->fields as $field => $attr) {
-            if (is_int($field)) {
-                $field = $attr;
-            }
-            if (! is_array($attr)) {
+        foreach ($this->fields as $key => $attr) {
+            if (is_int($key) && is_string($attr)) {
+                $key = $attr;
                 $attr = [
-                    'attr' => $field,
+                    'attr' => $attr,
+                ];
+            }
+            if (is_string($attr)) {
+                $attr = [
+                    'attr' => $attr,
                 ];
             }
 
-            $field = $attr['field'] ?? (($rootAlias ? "$rootAlias." : '') . $field);
-            $query->andWhere($query->expr()->eq($field, ":{$attr['attr']}"));
-            $query->setParameter($attr['attr'], $context[$attr['attr']]);
+            $field = $attr['field'] ?? (($rootAlias ? "$rootAlias." : '') . $key);
+            $query->andWhere($query->expr()->eq($field, ":{$key}"));
+            $query->setParameter($key, $context[$attr['attr']]);
         };
     }
 

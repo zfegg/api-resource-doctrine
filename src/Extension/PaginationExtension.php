@@ -14,10 +14,10 @@ class PaginationExtension implements ExtensionInterface
      * @param int[] $pageSizeRange
      */
     public function __construct(
-        private int $pageSize = 20,
-        private array $pageSizeRange = [20, 50, 100, 200],
-        private ?array $disabledFormats = [],
-        private bool $pageable = false,
+        protected int $pageSize = 20,
+        protected array $pageSizeRange = [20, 50, 100, 200],
+        protected ?array $disabledFormats = [],
+        protected bool $pageable = false,
     ) {
     }
 

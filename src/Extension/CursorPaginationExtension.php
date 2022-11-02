@@ -14,6 +14,17 @@ class CursorPaginationExtension extends PaginationExtension
      */
     public function getList($query, string $table, array $context)
     {
+        if ($this->pageable
+            && isset($context['query']['pageable'])
+            && boolval($context['query']['pageable']) === false
+        ) {
+            return ;
+        }
+
+        if (in_array($context['format'] ?? '', $this->disabledFormats)) {
+            return ;
+        }
+
         $class = $query instanceof ORMQueryBuilder ? ORMPaginator::class : DbalPaginator::class;
         $paginator = new $class($query);
         if (isset($context['query']['cursor'])) {

@@ -8,18 +8,17 @@ use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
 
 class PaginationExtension implements ExtensionInterface
 {
-    protected int $pageSize;
-
-    protected array $pageSizeRange;
 
     /**
      * PaginationExtension constructor.
      * @param int[] $pageSizeRange
      */
-    public function __construct(int $pageSize = 20, array $pageSizeRange = [20, 50, 100, 200])
-    {
-        $this->pageSize = $pageSize;
-        $this->pageSizeRange = $pageSizeRange;
+    public function __construct(
+        private int $pageSize = 20,
+        private array $pageSizeRange = [20, 50, 100, 200],
+        private ?array $disabledFormats = [],
+        private bool $pageable = false,
+    ) {
     }
 
     /**
@@ -27,6 +26,17 @@ class PaginationExtension implements ExtensionInterface
      */
     public function getList($query, string $table, array $context)
     {
+        if ($this->pageable
+            && isset($context['query']['pageable'])
+            && boolval($context['query']['pageable']) === false
+        ) {
+            return ;
+        }
+
+        if (in_array($context['format'] ?? '', $this->disabledFormats)) {
+            return ;
+        }
+
         $page = $context['query']['page'] ?? 1;
         $pageSize = $this->getAllowedPageSize((int)($context['query']['page_size'] ?? 0));
 

@@ -67,8 +67,12 @@ class KendoQueryFilter extends AbstractQueryFilter
             $filters = [];
             foreach ($filter['filters'] as $subFilter) {
                 if ($subFilter = $this->normalizeFilters($subFilter, $defaultFilters, $deep + 1)) {
-                    $key = $subFilter['field'] . '#' . $subFilter['operator'];
-                    $filters[$key] = $subFilter;
+                    if (isset($subFilter['filters'])) {
+                        $filters[] = $subFilter;
+                    } else {
+                        $key = $subFilter['field'] . '#' . $subFilter['operator'];
+                        $filters[$key] = $subFilter;
+                    }
                 }
             }
 

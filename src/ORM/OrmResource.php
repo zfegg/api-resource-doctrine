@@ -61,7 +61,8 @@ class OrmResource implements ResourceInterface
         $context[self::ROOT_ALIAS] = $tableAlias;
 
         foreach ($this->extensions as $extension) {
-            if ($curResult = $extension->getList($query, $this->entityName, $context)) {
+            $curResult = $extension->getList($query, $this->entityName, $context);
+            if (is_iterable($curResult)) {
                 $result = $curResult;
             }
         }

@@ -60,7 +60,8 @@ class DbalResource implements ResourceInterface
         $result = null;
 
         foreach ($this->extensions as $extension) {
-            if ($curResult = $extension->getList($query, $this->table, $context)) {
+            $curResult = $extension->getList($query, $this->table, $context);
+            if (is_iterable($curResult)) {
                 $result = $curResult;
             }
         }

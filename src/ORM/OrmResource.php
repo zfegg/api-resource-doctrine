@@ -126,8 +126,6 @@ class OrmResource implements ResourceInterface
             }
         }
 
-        $this->updateJoins($data);
-
         $obj = $this->serializer->denormalize(
             $data,
             $meta->getName(),
@@ -162,7 +160,6 @@ class OrmResource implements ResourceInterface
 
         $this->addFieldsByContext($context, $data);
 
-        $this->updateJoins($data);
         $this->serializer->denormalize(
             $data,
             $meta->getName(),
@@ -283,28 +280,5 @@ class OrmResource implements ResourceInterface
     private function getMetadata(): ClassMetadataInfo
     {
         return $this->em->getClassMetadata($this->entityName);
-    }
-
-    private function updateJoins(array &$data): void
-    {
-        $meta = $this->getMetadata();
-        foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
-            $targetMeta = $this->em->getClassMetadata($mapping['targetEntity']);
-            $id = $targetMeta->getIdentifier()[0];
-
-            // ManyToMany Collection
-            if (isset($data[$fieldName]) && is_array($data[$fieldName])) {
-                if ($meta->isCollectionValuedAssociation($fieldName)) {
-                    $collection = new ArrayCollection();
-
-                    foreach ($data[$fieldName] as $item) {
-                        $ref = $this->em->getReference($mapping['targetEntity'], is_array($item) ? $item[$id] : $item);
-                        $collection->add($ref);
-                    }
-
-                    $data[$fieldName] = $collection;
-                }
-            }
-        }
     }
 }

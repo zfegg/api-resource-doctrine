@@ -67,7 +67,7 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
             $type = $parameter->getType() ? $parameter->getType()->getName() : null;
             $name = $parameter->getName();
 
-            if (isset($options[$name]) && in_array($type, ['string', 'int', 'bool', 'float', 'array', null])) {
+            if (isset($options[$name]) && in_array($type, ['string', 'int', 'bool', 'float', 'array', 'mixed', null])) {
                 return $options[$name];
             }
 

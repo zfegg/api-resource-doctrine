@@ -102,10 +102,7 @@ final class CursorPaginator implements CursorPaginatorInterface
         return false;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         foreach ($this->initData() as $item) {
             yield $item;

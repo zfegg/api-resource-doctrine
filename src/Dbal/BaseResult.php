@@ -13,10 +13,7 @@ class BaseResult implements \IteratorAggregate
         $this->stmt = $stmt;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         $result = $this->stmt->executeQuery();
         while ($row = $result->fetchAssociative()) {

@@ -30,19 +30,13 @@ final class Paginator implements OffsetPaginatorInterface
         return $this->query->getMaxResults();
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         $query = $this->query;
         return $query->execute()->iterateAssociative();
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function count()
+    public function count(): int
     {
         if ($this->count === null) {
             $countQuery = clone $this->query;

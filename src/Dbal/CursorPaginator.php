@@ -23,10 +23,7 @@ final class CursorPaginator implements CursorPaginatorInterface
         $this->expr = $expr;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         $query = $this->query;
         if ($this->getCursor()) {

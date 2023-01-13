@@ -17,6 +17,13 @@ class OrmResourceTest extends TestCase
             'UsersResource' => [
                 'entity' => User::class,
                 'extensions' => [
+                    'kendo_query_filter' => [
+                        'fields' => [
+                            'name' => [
+                                'op' => ['eq', 'in']
+                            ],
+                        ]
+                    ],
                 ],
             ],
         ],
@@ -67,6 +74,21 @@ class OrmResourceTest extends TestCase
 
         $resource->delete($id);
         $this->assertNull($resource->get($id));
+
+        $result = $resource->getList([
+            'query' => [
+                'filter' => [
+                    'filters' => [
+                        [
+                            'field' => 'name',
+                            'operator' => 'in',
+                            'value' => ['test123', 'foo', 'bar']
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+        $this->assertIsIterable($result);
     }
 
 

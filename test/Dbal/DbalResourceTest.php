@@ -17,6 +17,13 @@ class DbalResourceTest extends TestCase
                 'table' => 'users',
                 'primary' => 'id',
                 'extensions' => [
+                    'kendo_query_filter' => [
+                        'fields' => [
+                            'name' => [
+                                'op' => ['eq', 'in']
+                            ],
+                        ]
+                    ],
                 ],
             ],
         ],
@@ -52,6 +59,21 @@ class DbalResourceTest extends TestCase
 
         $result = $resource->get($id);
         $this->assertNull($result);
+
+        $result = $resource->getList([
+            'query' => [
+                'filter' => [
+                    'filters' => [
+                        [
+                            'field' => 'name',
+                            'operator' => 'in',
+                            'value' => ['test123', 'foo', 'bar']
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+        $this->assertIsIterable($result);
     }
 
 

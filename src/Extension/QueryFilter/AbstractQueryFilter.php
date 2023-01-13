@@ -107,6 +107,16 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
             (($rootAlias ? "$rootAlias." : '') . $this->namingStrategy->columnName($filter['field']));
         if (in_array($op, ['isNull', 'isNotNull'])) {
             $expr = $query->expr()->$op($field);
+        } elseif (! $query instanceof ORMQueryBuilder && $op === 'in') {
+            if ($value && is_array($value)) {
+                $y = array_fill(0, count($value), '?');
+                $expr = $query->expr()->in($field, $y);
+
+                foreach ($value as $val) {
+                    $query->setParameter($paramIndex, $val, $this->fields[$filter['field']]['type'] ?? null);
+                    $paramIndex++;
+                }
+            }
         } else {
             $expr = $query->expr()->$op($field, $query instanceof ORMQueryBuilder ? "?$paramIndex" : '?');
             $query->setParameter($paramIndex, $value, $this->fields[$filter['field']]['type'] ?? null);

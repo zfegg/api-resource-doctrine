@@ -2,7 +2,6 @@
 
 namespace Zfegg\ApiResourceDoctrine\ORM;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
@@ -10,8 +9,8 @@ use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
-use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
-use Zfegg\ApiRestfulHandler\Resource\ResourceNotAllowedTrait;
+use Zfegg\ApiRestfulHandler\ResourceInterface;
+use Zfegg\ApiRestfulHandler\ResourceNotAllowedTrait;
 use Zfegg\PsrMvc\Exception\ConflictHttpException;
 
 class OrmResource implements ResourceInterface

@@ -6,8 +6,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Result;
 use Symfony\Component\Serializer\Serializer;
-use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
-use Zfegg\ApiRestfulHandler\Resource\ResourceNotAllowedTrait;
+use Zfegg\ApiRestfulHandler\ResourceInterface;
+use Zfegg\ApiRestfulHandler\ResourceNotAllowedTrait;
 
 class DbalResource implements ResourceInterface
 {

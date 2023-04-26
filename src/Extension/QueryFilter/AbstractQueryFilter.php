@@ -13,6 +13,22 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
     private ?string $rootAlias = null;
     protected NamingStrategyInterface $namingStrategy;
 
+
+    /**
+     *
+     * @param array $fields
+     * <code>
+     * [
+     *   'key' => [
+     *      'field' => 'o.keyName',
+     *      'op' => ['eq', 'startswith'],
+     *   ],
+     *   'key' => [
+     *      'expr' => ':key MEMBER OF o.keys',
+     *   ],
+     * ]
+     * </code>
+     */
     public function __construct(array $fields, ?NamingStrategyInterface $namingStrategy = null)
     {
         $this->fields = self::normalize($fields);
@@ -75,7 +91,7 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
      *
      * @return \Doctrine\DBAL\Query\Expression\CompositeExpression|\Doctrine\ORM\Query\Expr\Composite
      */
-    protected function makePredicate(array $filter, $query, int &$paramIndex)
+    protected function makePredicate(array $filter, $query)
     {
         $rootAlias = $this->getRootAlias($query);
         $op = $filter['operator'];
@@ -102,6 +118,11 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
                 break;
         }
 
+        if (isset($this->fields[$filter['field']]['expr'])) {
+            $query->setParameter($filter['field'], $value, $this->fields[$filter['field']]['type'] ?? null);
+            return $this->fields[$filter['field']]['expr'];
+        }
+
         $op = self::OPERATORS[$op];
         $field = $this->fields[$filter['field']]['field'] ??
             (($rootAlias ? "$rootAlias." : '') . $this->namingStrategy->columnName($filter['field']));
@@ -109,18 +130,22 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
             $expr = $query->expr()->$op($field);
         } elseif (! $query instanceof ORMQueryBuilder && $op === 'in') {
             if ($value && is_array($value)) {
-                $y = array_fill(0, count($value), '?');
-                $expr = $query->expr()->in($field, $y);
+                $y = [];
 
-                foreach ($value as $val) {
-                    $query->setParameter($paramIndex, $val, $this->fields[$filter['field']]['type'] ?? null);
-                    $paramIndex++;
+                foreach ($value as $idx => $val) {
+                    $paramName = "{$filter['field']}_$idx";
+                    $y[] = ":$paramName";
+                    $query->setParameter(
+                        $paramName,
+                        $val,
+                        $this->fields[$filter['field']]['type'] ?? null
+                    );
                 }
+                $expr = $query->expr()->in($field, $y);
             }
         } else {
-            $expr = $query->expr()->$op($field, $query instanceof ORMQueryBuilder ? "?$paramIndex" : '?');
-            $query->setParameter($paramIndex, $value, $this->fields[$filter['field']]['type'] ?? null);
-            $paramIndex++;
+            $expr = $query->expr()->$op($field, ":{$filter['field']}");
+            $query->setParameter($filter['field'], $value, $this->fields[$filter['field']]['type'] ?? null);
         }
 
         return $expr;

@@ -2,13 +2,16 @@
 
 namespace ZfeggTest\ApiResourceDoctrine\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Table("users")]
+#[ORM\Table("groups")]
 #[ORM\Entity]
 #[ORM\UniqueConstraint(name: "name", columns: ["name"])]
-class User
+class Group
 {
+
     #[ORM\Column("id", "integer")]
     #[ORM\Id]
     #[ORM\GeneratedValue("IDENTITY")]
@@ -17,12 +20,13 @@ class User
     #[ORM\Column("name", "string", 255)]
     private string $name;
 
-    #[ORM\Column("status", "integer")]
-    private int $status = 1;
+    #[ORM\OneToMany("group", User::class, ["persist", "remove"], orphanRemoval: true)]
+    private Collection $users;
 
-    #[ORM\ManyToOne(Group::class, inversedBy: "users")]
-    #[ORM\JoinColumn('group_id', referencedColumnName: "id")]
-    private Group $group;
+    public function __construct()
+    {
+        $this->users = new ArrayCollection();
+    }
 
     public function getId(): int
     {
@@ -44,27 +48,13 @@ class User
         $this->name = $name;
     }
 
-    /**
-     */
-    public function getGroup(): Group
+    public function getUsers(): Collection
     {
-        return $this->group;
+        return $this->users;
     }
 
-    /**
-     */
-    public function setGroup(Group $group): void
+    public function setUsers(Collection $users): void
     {
-        $this->group = $group;
-    }
-
-    public function getStatus(): int
-    {
-        return $this->status;
-    }
-
-    public function setStatus(int $status): void
-    {
-        $this->status = $status;
+        $this->users = $users;
     }
 }

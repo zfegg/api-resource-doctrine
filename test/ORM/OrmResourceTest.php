@@ -3,6 +3,7 @@
 namespace ZfeggTest\ApiResourceDoctrine\ORM;
 
 use PHPUnit\Framework\TestCase;
+use ZfeggTest\ApiResourceDoctrine\Entity\Group;
 use ZfeggTest\ApiResourceDoctrine\ResourceTestsTrait;
 use ZfeggTest\ApiResourceDoctrine\SetUpContainerTrait;
 use ZfeggTest\ApiResourceDoctrine\Entity\User;
@@ -21,6 +22,21 @@ class OrmResourceTest extends TestCase
                         'fields' => [
                             'name' => [
                                 'op' => ['eq', 'in']
+                            ],
+                        ]
+                    ],
+                ],
+            ],
+            'GroupsResource' => [
+                'entity' => Group::class,
+                'extensions' => [
+                    'kendo_query_filter' => [
+                        'fields' => [
+                            'name' => [
+                                'op' => ['eq']
+                            ],
+                            'users' => [
+                                'expr' => ':users member of o.users'
                             ],
                         ]
                     ],
@@ -55,9 +71,9 @@ class OrmResourceTest extends TestCase
 
     public function testCreateGetUpdateDelete(): void
     {
-        /** @var \Zfegg\ApiRestfulHandler\Resource\ResourceInterface $resource */
+        /** @var \Zfegg\ApiRestfulHandler\ResourceInterface $resource */
         $resource = $this->container->get('UsersResource');
-        $result = $resource->create(['name' => 'test']);
+        $result = $resource->create(['name' => 'test', 'group' => 1]);
         $this->assertInstanceOf(User::class, $result);
 
         $id = $result->getId();
@@ -89,6 +105,46 @@ class OrmResourceTest extends TestCase
             ]
         ]);
         $this->assertIsIterable($result);
+    }
+
+    public function testAssociationCreateGetUpdateDelete(): void
+    {
+        /** @var \Zfegg\ApiRestfulHandler\ResourceInterface $resource */
+        $resource = $this->container->get('GroupsResource');
+        $result = $resource->create(['name' => 'test']);
+        $this->assertInstanceOf(Group::class, $result);
+
+        $id = $result->getId();
+
+        $result = $resource->get($id);
+        $this->assertInstanceOf(Group::class, $result);
+        $this->assertEquals('test', $result->getName());
+
+        $result = $resource->update($id, ['name' => 'test123']);
+        $this->assertEquals('test123', $result->getName());
+
+        $result = $resource->getList([
+            'query' => [
+                'filter' => [
+                    'filters' => [
+                        [
+                            'field' => 'users',
+                            'operator' => 'eq',
+                            'value' => '123'
+                        ],
+                        [
+                            'field' => 'name',
+                            'operator' => 'eq',
+                            'value' => 'test123'
+                        ],
+                    ]
+                ]
+            ]
+        ]);
+        $this->assertIsIterable($result);
+
+        $resource->delete($id);
+        $this->assertNull($resource->get($id));
     }
 
 

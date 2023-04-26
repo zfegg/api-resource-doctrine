@@ -2,12 +2,19 @@
 
 namespace ZfeggTest\ApiResourceDoctrine;
 
+use Doctrine\Persistence\ManagerRegistry;
 use Laminas\ServiceManager\ServiceManager;
 use Laminas\Stdlib\ArrayUtils;
+use Psr\Container\ContainerInterface;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Zfegg\ApiResourceDoctrine\ConfigProvider;
+use Zfegg\ApiResourceDoctrine\Serializer\DoctrineEntityDenormalizer;
+use Zfegg\ApiSerializerExt\Basic\CollectionNormalizer;
 use Zfegg\DoctrineHelper\Factory\DoctrineAbstractFactory;
 
 trait SetUpContainerTrait
@@ -27,11 +34,18 @@ trait SetUpContainerTrait
         /** @var \Doctrine\DBAL\Connection $conn */
         $conn = $this->container->get('doctrine.connection.default');
         $userCreateSql = <<<EOT
+create table groups (
+  id INTEGER
+  constraint groups_pk
+  primary key autoincrement,
+  name text
+);
 create table users (
   id INTEGER
   constraint users_pk
   primary key autoincrement,
   name text,
+  group_id integer,
   status integer default 1
 );
 create unique index users_name_uindex on users (name);
@@ -46,7 +60,11 @@ create table bar (
   foo_id integer 
 );
 EOT;
-        $conn->prepare($userCreateSql)->execute();
+        foreach (explode(';', $userCreateSql) as $sql) {
+            if (! empty(trim($sql))) {
+                $conn->prepare($sql)->executeStatement();
+            }
+        }
     }
 
     public function getConfig(): array
@@ -57,9 +75,17 @@ EOT;
                     DoctrineAbstractFactory::class,
                 ],
                 'factories' => [
-                    SerializerInterface::class => function () {
+                    SerializerInterface::class => function (ContainerInterface $container) {
                         return new Serializer([
-                            new ObjectNormalizer(),
+                            new DoctrineEntityDenormalizer($container->get(ManagerRegistry::class)),
+                            new ArrayDenormalizer(),
+                            new ObjectNormalizer(
+                                null,
+                                new CamelCaseToSnakeCaseNameConverter(),
+                                null,
+                                new ReflectionExtractor(),
+                            ),
+                            new CollectionNormalizer(),
                         ]);
                     }
                 ]

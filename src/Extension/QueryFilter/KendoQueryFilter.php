@@ -35,9 +35,7 @@ class KendoQueryFilter extends AbstractQueryFilter
         $defaultFilters = $this->defaultFilters;
         $filter = $this->normalizeFilters($filter, $defaultFilters);
 
-        $paramIndex = 0;
-
-        if ($predicate = $this->parseFilters($filter, $query, $paramIndex)) {
+        if ($predicate = $this->parseFilters($filter, $query)) {
             $query->andWhere($predicate);
         }
     }
@@ -91,14 +89,14 @@ class KendoQueryFilter extends AbstractQueryFilter
      * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
      * @return  \Doctrine\DBAL\Query\Expression\CompositeExpression|\Doctrine\ORM\Query\Expr\Composite|null
      */
-    private function parseFilters(array $filter, $query, int &$paramIndex)
+    private function parseFilters(array $filter, $query)
     {
         $predicates = [];
         foreach ($filter['filters'] as $subFilter) {
             if (! empty($subFilter['filters'])) {
-                $predicates[] = $this->parseFilters($subFilter, $query, $paramIndex);
+                $predicates[] = $this->parseFilters($subFilter, $query);
             } else {
-                $predicates[] = $this->makePredicate($subFilter, $query, $paramIndex);
+                $predicates[] = $this->makePredicate($subFilter, $query);
             }
         }
 

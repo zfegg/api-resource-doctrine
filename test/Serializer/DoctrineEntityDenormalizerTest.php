@@ -15,7 +15,7 @@ class DoctrineEntityDenormalizerTest extends TestCase
     private array $config = [
     ];
 
-    public function context()
+    public function context(): array
     {
         return [
             [['entity_manager' => 'default']],

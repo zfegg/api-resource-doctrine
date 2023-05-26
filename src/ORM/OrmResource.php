@@ -150,11 +150,11 @@ class OrmResource implements ResourceInterface
      */
     public function update(int|string $id, object|array $data, array $context = []): object|array
     {
-        $format = $context['format'] ?? '';
         $obj = $this->em->find($this->entityName, $id);
 
         $meta = $this->getMetadata();
         $context = $context + $this->mutationContext;
+        $format = $context['format'] ?? 'json';
         $context[AbstractNormalizer::OBJECT_TO_POPULATE] = $obj;
         $context[AbstractObjectNormalizer::DEEP_OBJECT_TO_POPULATE] = true;
 

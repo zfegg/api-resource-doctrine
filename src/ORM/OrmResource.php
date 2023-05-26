@@ -101,7 +101,6 @@ class OrmResource implements ResourceInterface
      */
     public function create(object|array $data, array $context = []): object|array
     {
-        $format = $context['format'] ?? '';
         $context[self::ROOT_ALIAS] = 'o';
 
         if ($this->parent) {
@@ -110,6 +109,8 @@ class OrmResource implements ResourceInterface
         }
 
         $context = $context + $this->creationContext;
+        $format = $context['format'] ?? 'json';
+
         $this->addFieldsByContext($context, $data);
 
         $meta = $this->getMetadata();

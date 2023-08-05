@@ -144,11 +144,9 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
                 $expr = $query->expr()->in($field, $y);
             }
         } else {
-            $paramName = "{$filter['field']}_{$filter['operator']}";
+            $paramName = "{$filter['field']}__{$filter['operator']}";
             $expr = $query->expr()->$op($field, ":{$paramName}");
-            $type = $this->fields[$filter['field']]['type'] ?? null;
-            $query->setParameter($filter['field'], $value, $type);
-            $query->setParameter($paramName, $value, $type);
+            $query->setParameter($paramName, $value, $this->fields[$filter['field']]['type'] ?? null);
         }
 
         return $expr;

@@ -105,7 +105,12 @@ class OrmResource implements ResourceInterface
 
         if ($this->parent) {
             $mapping = $this->getParentMapping();
-            $data[$mapping['fieldName']] = $context[$this->getParentContextKey()];
+            $key = $this->getParentContextKey();
+            if ($mapping['type'] == ClassMetadataInfo::MANY_TO_MANY) {
+                $data[$mapping['fieldName']] = (array)$context[$key];
+            } else {
+                $data[$mapping['fieldName']] = $context[$key];
+            }
         }
 
         $context = $context + $this->creationContext;
@@ -133,9 +138,8 @@ class OrmResource implements ResourceInterface
             $context,
         );
 
-        $this->em->persist($obj);
-
         try {
+            $this->em->persist($obj);
             $this->em->flush();
         } catch (UniqueConstraintViolationException $e) {
             throw new ConflictHttpException($e->getMessage(), $e);
@@ -230,10 +234,14 @@ class OrmResource implements ResourceInterface
 
         while ($parentResource) {
             $curMapping = $curResource->getParentMapping();
-            $field = "$tableAlias.{$curMapping['fieldName']}";
             $key = $curResource->getParentContextKey();
-            $query->andWhere($query->expr()->eq("IDENTITY($field)", ":$key"));
-            $query->setParameter($key, $context[$curResource->getParentContextKey()]);
+            $field = "$tableAlias.{$curMapping['fieldName']}";
+            if ($curMapping['type'] == ClassMetadataInfo::MANY_TO_MANY) {
+                $query->andWhere($query->expr()->isMemberOf(":$key", $field));
+            } else {
+                $query->andWhere($query->expr()->eq("IDENTITY($field)", ":$key"));
+            }
+            $query->setParameter($key, $context[$key]);
             if ($p) {
                 $query->join($nextJoin, $tableAlias);
             }
@@ -261,7 +269,12 @@ class OrmResource implements ResourceInterface
             return $this->parentContextKey;
         }
 
-        $this->parentContextKey = $this->getParentMapping()['joinColumns'][0]['name'];
+        $parentMapping = $this->getParentMapping();
+        if ($parentMapping['type'] == ClassMetadataInfo::MANY_TO_MANY) {
+            $this->parentContextKey = $parentMapping['joinTable']['inverseJoinColumns'][0]['name'];
+        } else {
+            $this->parentContextKey = $parentMapping['joinColumns'][0]['name'];
+        }
 
         return $this->parentContextKey;
     }

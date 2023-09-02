@@ -59,6 +59,15 @@ create table bar (
   name text,
   foo_id integer 
 );
+create table roles (
+  id INTEGER constraint foo_pk primary key autoincrement,
+  name text
+);
+create table admin_users_roles (
+  id INTEGER constraint foo_pk primary key autoincrement,
+  user_id integer,
+  role_id integer
+)
 EOT;
         foreach (explode(';', $userCreateSql) as $sql) {
             if (! empty(trim($sql))) {
@@ -112,13 +121,6 @@ EOT;
                     ],
                 ],
                 'driver' => [
-                    'annotation' => [
-                        'class' => \Doctrine\ORM\Mapping\Driver\AnnotationDriver::class,
-                        'cache' => 'default',
-                        'paths' => [
-                            __DIR__ . '/Entity',
-                        ],
-                    ],
                     'attribute' => [
                         'class' => \Doctrine\ORM\Mapping\Driver\AttributeDriver::class,
                         'paths' => [
@@ -130,12 +132,6 @@ EOT;
                         'default_driver' => 'attribute',
                         'drivers' => [
                         ],
-                    ],
-                ],
-                'cache' => [
-                    'default' => [
-                        'class' => \Doctrine\Common\Cache\ArrayCache::class,
-                        'paths' => [],
                     ],
                 ],
             ]

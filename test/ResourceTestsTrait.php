@@ -2,7 +2,7 @@
 
 namespace ZfeggTest\ApiResourceDoctrine;
 
-use Zfegg\ApiRestfulHandler\Resource\ResourceInterface;
+use Zfegg\ApiRestfulHandler\ResourceInterface;
 
 trait ResourceTestsTrait
 {

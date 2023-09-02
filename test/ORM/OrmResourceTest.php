@@ -2,8 +2,10 @@
 
 namespace ZfeggTest\ApiResourceDoctrine\ORM;
 
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use ZfeggTest\ApiResourceDoctrine\Entity\Group;
+use ZfeggTest\ApiResourceDoctrine\Entity\Role;
 use ZfeggTest\ApiResourceDoctrine\ResourceTestsTrait;
 use ZfeggTest\ApiResourceDoctrine\SetUpContainerTrait;
 use ZfeggTest\ApiResourceDoctrine\Entity\User;
@@ -15,8 +17,12 @@ class OrmResourceTest extends TestCase
 
     private array $config = [
         'doctrine.orm-resources' => [
+            'RolesResource' => [
+                'entity' => Role::class,
+            ],
             'UsersResource' => [
                 'entity' => User::class,
+                'parent' => 'RolesResource',
                 'extensions' => [
                     'kendo_query_filter' => [
                         'fields' => [
@@ -71,25 +77,32 @@ class OrmResourceTest extends TestCase
 
     public function testCreateGetUpdateDelete(): void
     {
+
+        $roleResource = $this->container->get('RolesResource');
+        $role = $roleResource->create(['name' => 'test']);
         /** @var \Zfegg\ApiRestfulHandler\ResourceInterface $resource */
         $resource = $this->container->get('UsersResource');
-        $result = $resource->create(['name' => 'test', 'group' => 1]);
+
+        $context = [
+            'role_id' => $role->getId(),
+        ];
+        $result = $resource->create(['name' => 'test', 'group' => 1], $context);
         $this->assertInstanceOf(User::class, $result);
 
         $id = $result->getId();
 
-        $result = $resource->get($id);
+        $result = $resource->get($id, $context);
         $this->assertInstanceOf(User::class, $result);
         $this->assertEquals('test', $result->getName());
 
-        $result = $resource->update($id, ['name' => 'test123']);
+        $result = $resource->update($id, ['name' => 'test123'], $context);
         $this->assertEquals('test123', $result->getName());
 
-        $result = $resource->update($id, ['name' => 'test456']);
+        $result = $resource->update($id, ['name' => 'test456'], $context);
         $this->assertEquals('test456', $result->getName());
 
         $resource->delete($id);
-        $this->assertNull($resource->get($id));
+        $this->assertNull($resource->get($id, $context));
 
         $result = $resource->getList([
             'query' => [
@@ -102,8 +115,8 @@ class OrmResourceTest extends TestCase
                         ]
                     ]
                 ]
-            ]
-        ]);
+            ],
+        ] + $context);
         $this->assertIsIterable($result);
     }
 
@@ -164,5 +177,54 @@ class OrmResourceTest extends TestCase
         $result = $resource->getList();
         $this->assertIsIterable($result);
         $this->assertCount(1, $result);
+    }
+
+    public function testManyToMany(): void
+    {
+        $em = $this->container->get(EntityManagerInterface::class);
+
+        $role = new Role();
+        $role->setName("role1");
+        $em->persist($role);
+        $role = new Role();
+        $role->setName("role2");
+        $em->persist($role);
+        $em->flush();
+        /** @var \Zfegg\ApiRestfulHandler\ResourceInterface $resource */
+        $resource = $this->container->get('UsersResource');
+        $result = $resource->create(['name' => 'test', 'roles' => [1]]);
+        $this->assertInstanceOf(User::class, $result);
+
+        $id = $result->getId();
+
+        $result = $resource->get($id);
+        $this->assertInstanceOf(User::class, $result);
+        $this->assertEquals('test', $result->getName());
+
+        $result = $resource->update($id, ['name' => 'test123', 'roles' => [1,2]]);
+        $this->assertEquals('test123', $result->getName());
+
+        $result = $resource->getList([
+            'query' => [
+                'filter' => [
+                    'filters' => [
+                        [
+                            'field' => 'users',
+                            'operator' => 'eq',
+                            'value' => '123'
+                        ],
+                        [
+                            'field' => 'name',
+                            'operator' => 'eq',
+                            'value' => 'test123'
+                        ],
+                    ]
+                ]
+            ]
+        ]);
+        $this->assertIsIterable($result);
+
+        $resource->delete($id);
+        $this->assertNull($resource->get($id));
     }
 }

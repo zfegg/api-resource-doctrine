@@ -26,8 +26,7 @@ class User
     #[ORM\JoinColumn('group_id', referencedColumnName: "id")]
     private Group $group;
 
-    #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: "users")]
-    #[ORM\JoinTable('admin_users_roles')]
+    #[ORM\ManyToMany(Role::class, "users")]
     #[ORM\JoinColumn('user_id', referencedColumnName: "id")]
     #[ORM\InverseJoinColumn('role_id', referencedColumnName: "id")]
     private Collection $roles;

@@ -22,6 +22,18 @@ class OrmResourceTest extends TestCase
             ],
             'UsersResource' => [
                 'entity' => User::class,
+                'extensions' => [
+                    'kendo_query_filter' => [
+                        'fields' => [
+                            'name' => [
+                                'op' => ['eq', 'in']
+                            ],
+                        ]
+                    ],
+                ],
+            ],
+            'UsersResource2' => [
+                'entity' => User::class,
                 'parent' => 'RolesResource',
                 'extensions' => [
                     'kendo_query_filter' => [
@@ -81,7 +93,7 @@ class OrmResourceTest extends TestCase
         $roleResource = $this->container->get('RolesResource');
         $role = $roleResource->create(['name' => 'test']);
         /** @var \Zfegg\ApiRestfulHandler\ResourceInterface $resource */
-        $resource = $this->container->get('UsersResource');
+        $resource = $this->container->get('UsersResource2');
 
         $context = [
             'role_id' => $role->getId(),

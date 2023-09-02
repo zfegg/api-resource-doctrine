@@ -20,8 +20,10 @@ class Role
     #[ORM\Column("name", "string", 255)]
     private string $name;
 
-
-    #[ORM\ManyToMany(User::class, "roles")]
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: "roles")]
+    #[ORM\JoinTable('admin_users_roles')]
+    #[ORM\JoinColumn('role_id', referencedColumnName: "id")]
+    #[ORM\InverseJoinColumn('user_id', referencedColumnName: "id")]
     private Collection $users;
 
     public function __construct()

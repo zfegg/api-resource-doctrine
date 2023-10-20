@@ -61,6 +61,6 @@ class DefaultQueryFilter extends AbstractQueryFilter
             }
         }
 
-        return $filters + array_merge(...array_values($defaultFilters));
+        return array_merge($filters, ...array_values($defaultFilters));
     }
 }

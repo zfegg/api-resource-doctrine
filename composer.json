@@ -28,6 +28,9 @@
   "extra": {
     "laminas": {
       "config-provider": "Zfegg\\ApiResourceDoctrine\\ConfigProvider"
+    },
+    "branch-alias": {
+      "dev-master": "0.5.x-dev"
     }
   },
   "require-dev": {

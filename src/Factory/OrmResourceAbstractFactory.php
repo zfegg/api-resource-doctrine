@@ -14,7 +14,7 @@ class OrmResourceAbstractFactory implements AbstractFactoryInterface
     /**
      * @inheritdoc
      */
-    public function canCreate(ContainerInterface $container, $requestedName)
+    public function canCreate(ContainerInterface $container, $requestedName): bool
     {
         return isset($container->get('config')['doctrine.orm-resources'][$requestedName]);
     }
@@ -22,7 +22,7 @@ class OrmResourceAbstractFactory implements AbstractFactoryInterface
     /**
      * @inheritdoc
      */
-    public function __invoke(ContainerInterface $container, $requestedName, ?array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, ?array $options = null): mixed
     {
         $config = $container->get('config')['doctrine.orm-resources'][$requestedName];
         $extensions = $container->get(ExtensionsFactory::class)->create($config['extensions'] ?? []);

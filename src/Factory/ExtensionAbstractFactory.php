@@ -23,7 +23,7 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
     /**
      * @inheritdoc
      */
-    public function canCreate(ContainerInterface $container, $requestedName)
+    public function canCreate(ContainerInterface $container, $requestedName): bool
     {
         return class_exists($requestedName);
     }
@@ -31,7 +31,7 @@ class ExtensionAbstractFactory implements AbstractFactoryInterface
     /**
      * @inheritdoc
      */
-    public function __invoke(ContainerInterface $container, $requestedName, ?array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, ?array $options = null): mixed
     {
         $reflectionClass = new ReflectionClass($requestedName);
 

@@ -2,8 +2,8 @@
 
 namespace Zfegg\ApiResourceDoctrine\Factory;
 
-use Interop\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\AbstractFactoryInterface;
+use Psr\Container\ContainerInterface;
 use Zfegg\ApiResourceDoctrine\Dbal\DbalResource;
 use Zfegg\ApiResourceDoctrine\Extension\ExtensionsFactory;
 

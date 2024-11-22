@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Zfegg\ApiResourceDoctrine\Dbal;
 
 use Doctrine\DBAL\Query\QueryBuilder as DBALQueryBuilder;

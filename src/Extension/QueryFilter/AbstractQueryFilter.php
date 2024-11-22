@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension\QueryFilter;
 
@@ -133,7 +135,7 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
         } else {
             if (in_array($op, ['in', 'notIn'])) {
                 $paramType = $this->fields[$filter['field']]['type'] ?? ArrayParameterType::STRING;
-            } else if ($query instanceof ORMQueryBuilder) {
+            } elseif ($query instanceof ORMQueryBuilder) {
                 $paramType = $this->fields[$filter['field']]['type'] ?? null;
             } else {
                 $paramType = $this->fields[$filter['field']]['type'] ?? ParameterType::STRING;

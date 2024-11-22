@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types = 1);
 
 namespace Zfegg\ApiResourceDoctrine\Extension;
 
@@ -14,7 +16,6 @@ class ExtensionsFactory extends AbstractPluginManager
     protected $instanceOf = ExtensionInterface::class;
 
     /**
-     * @param array $config
      * @return ExtensionInterface[]
      */
     public function create(array $config): array

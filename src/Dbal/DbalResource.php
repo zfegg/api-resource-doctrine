@@ -155,7 +155,7 @@ class DbalResource implements ResourceInterface
 
         $qb->update($table)
             ->where(
-                $qb->expr()->eq($primary, $id)
+                $qb->expr()->eq($primary, (string) $id)
             );
         $this->joinParent($qb, $context);
 

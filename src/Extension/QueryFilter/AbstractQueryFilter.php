@@ -2,7 +2,11 @@
 
 namespace Zfegg\ApiResourceDoctrine\Extension\QueryFilter;
 
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
+use Doctrine\DBAL\Query\QueryBuilder as DBALQueryBuilder;
+use Zfegg\ApiResourceDoctrine\Dbal\Utils;
 use Zfegg\ApiResourceDoctrine\Extension\ExtensionInterface;
 
 abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInterface
@@ -87,11 +91,9 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
     }
 
     /**
-     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
-     *
      * @return \Doctrine\DBAL\Query\Expression\CompositeExpression|\Doctrine\ORM\Query\Expr\Composite
      */
-    protected function makePredicate(array $filter, $query)
+    protected function makePredicate(array $filter, ORMQueryBuilder|DBALQueryBuilder $query)
     {
         $rootAlias = $this->getRootAlias($query);
         $op = $filter['operator'];
@@ -128,34 +130,23 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
             (($rootAlias ? "$rootAlias." : '') . $this->namingStrategy->columnName($filter['field']));
         if (in_array($op, ['isNull', 'isNotNull'])) {
             $expr = $query->expr()->$op($field);
-        } elseif (! $query instanceof ORMQueryBuilder && $op === 'in') {
-            if ($value && is_array($value)) {
-                $y = [];
-
-                foreach ($value as $idx => $val) {
-                    $paramName = "{$filter['field']}_$idx";
-                    $y[] = ":$paramName";
-                    $query->setParameter(
-                        $paramName,
-                        $val,
-                        $this->fields[$filter['field']]['type'] ?? null
-                    );
-                }
-                $expr = $query->expr()->in($field, $y);
-            }
         } else {
+            if (in_array($op, ['in', 'notIn'])) {
+                $paramType = $this->fields[$filter['field']]['type'] ?? ArrayParameterType::STRING;
+            } else if ($query instanceof ORMQueryBuilder) {
+                $paramType = $this->fields[$filter['field']]['type'] ?? null;
+            } else {
+                $paramType = $this->fields[$filter['field']]['type'] ?? ParameterType::STRING;
+            }
             $paramName = "{$filter['field']}__{$filter['operator']}";
             $expr = $query->expr()->$op($field, ":{$paramName}");
-            $query->setParameter($paramName, $value, $this->fields[$filter['field']]['type'] ?? null);
+            $query->setParameter($paramName, $value, $paramType);
         }
 
         return $expr;
     }
 
-    /**
-     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder $query
-     */
-    protected function getRootAlias($query): ?string
+    protected function getRootAlias(ORMQueryBuilder|DBALQueryBuilder $query): ?string
     {
         if ($this->rootAlias !== null) {
             return $this->rootAlias;
@@ -164,7 +155,8 @@ abstract class AbstractQueryFilter implements QueryFilterInterface, ExtensionInt
         if ($query instanceof ORMQueryBuilder) {
             $rootAlias = $query->getRootAliases()[0];
         } else {
-            $rootAlias = current((array)$query->getQueryPart('from'))['alias'] ?? null;
+            $from = Utils::getQueryParts($query, 'from');
+            $rootAlias = $from[0]->alias ?? null;
         }
 
         return $this->rootAlias = $rootAlias;

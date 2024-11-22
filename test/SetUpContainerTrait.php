@@ -109,7 +109,7 @@ EOT;
                     'default' => [
                         'event_manager' => 'default',
                         'params' => [
-                            'url' => 'sqlite:///:memory:',
+                            'url' => 'pdo-sqlite:///:memory:',
 //                            'url' => 'sqlite:///' . __DIR__ . '/test.db',
                         ],
                     ],

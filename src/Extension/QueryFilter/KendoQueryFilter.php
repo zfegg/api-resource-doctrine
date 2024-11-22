@@ -2,6 +2,9 @@
 
 namespace Zfegg\ApiResourceDoctrine\Extension\QueryFilter;
 
+use Doctrine\DBAL\Query\QueryBuilder as DBALQueryBuilder;
+use Doctrine\ORM\QueryBuilder as ORMQueryBuilder;
+
 class KendoQueryFilter extends AbstractQueryFilter
 {
 
@@ -26,11 +29,7 @@ class KendoQueryFilter extends AbstractQueryFilter
         $this->filter((array)($params['filter'] ?? []), $query);
     }
 
-    /**
-     * @param array $filter
-     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
-     */
-    private function filter(array $filter, $query): void
+    private function filter(array $filter, ORMQueryBuilder|DBALQueryBuilder $query): void
     {
         $defaultFilters = $this->defaultFilters;
         $filter = $this->normalizeFilters($filter, $defaultFilters);
@@ -86,10 +85,9 @@ class KendoQueryFilter extends AbstractQueryFilter
     }
 
     /**
-     * @param \Doctrine\DBAL\Query\QueryBuilder|\Doctrine\ORM\QueryBuilder  $query
      * @return  \Doctrine\DBAL\Query\Expression\CompositeExpression|\Doctrine\ORM\Query\Expr\Composite|null
      */
-    private function parseFilters(array $filter, $query)
+    private function parseFilters(array $filter, ORMQueryBuilder|DBALQueryBuilder $query)
     {
         $predicates = [];
         foreach ($filter['filters'] as $subFilter) {
@@ -101,7 +99,10 @@ class KendoQueryFilter extends AbstractQueryFilter
         }
 
         if ($predicates) {
-            $logic = isset($filter['logic']) && $filter['logic'] == 'or' ? 'orX' : 'andX';
+            $logic = isset($filter['logic']) && $filter['logic'] == 'or' ? 'or' : 'and';
+            if ($query instanceof ORMQueryBuilder) {
+                $logic .= 'X';
+            }
             return $query->expr()->$logic(...$predicates);
         }
 

@@ -20,7 +20,7 @@ class Group
     #[ORM\Column("name", "string", 255)]
     private string $name;
 
-    #[ORM\OneToMany("group", User::class, ["persist", "remove"], orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: User::class, mappedBy: "group", cascade: ["persist", "remove"], orphanRemoval: true)]
     private Collection $users;
 
     public function __construct()

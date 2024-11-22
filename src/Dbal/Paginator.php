@@ -10,13 +10,11 @@ final class Paginator implements OffsetPaginatorInterface
 {
     use PaginatorPropertyTrait;
 
-    private QueryBuilder $query;
-
     private ?int $count = null;
 
-    public function __construct(QueryBuilder $query)
-    {
-        $this->query = $query;
+    public function __construct(
+        private QueryBuilder $query,
+    ) {
     }
 
     public function getCurrentPage(): int
@@ -33,7 +31,7 @@ final class Paginator implements OffsetPaginatorInterface
     public function getIterator(): \Traversable
     {
         $query = $this->query;
-        return $query->execute()->iterateAssociative();
+        return $query->executeQuery()->iterateAssociative();
     }
 
     public function count(): int
@@ -42,18 +40,19 @@ final class Paginator implements OffsetPaginatorInterface
             $countQuery = clone $this->query;
             $countQuery->setMaxResults(null);
             $countQuery->setFirstResult(0);
-            if (! count($countQuery->getQueryPart('groupBy'))) {
+
+            if (! count(Utils::getQueryParts($countQuery, 'groupBy'))) {
                 $countQuery->select('count(*)');
-                $countQuery->resetQueryPart('orderBy');
+                $countQuery->resetGroupBy();
             } else {
-                $countQuery->resetQueryPart('orderBy');
-                $countQuery = $this->query->getConnection()
-                    ->createQueryBuilder()
+                $countQuery->resetOrderBy();
+                $countQueryWrap = clone $countQuery;
+                $countQuery = $countQueryWrap
                     ->select('count(*)')
-                    ->from($countQuery);
+                    ->from($countQuery->getSQL());
             }
 
-            $this->count = (int)$countQuery->execute()->fetchOne();
+            $this->count = (int)$countQuery->fetchOne();
         }
 
         return $this->count;

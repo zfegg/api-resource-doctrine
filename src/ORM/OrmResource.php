@@ -4,7 +4,9 @@ namespace Zfegg\ApiResourceDoctrine\ORM;
 
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\Mapping\AssociationMapping;
+use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Mapping\ManyToManyAssociationMapping;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
@@ -19,7 +21,7 @@ class OrmResource implements ResourceInterface
 
     public const ROOT_ALIAS = '__QUERY_ROOT_ALIAS__';
 
-    private ?array $parentMapping = null;
+    private ?AssociationMapping $parentMapping = null;
 
     private array $creationContext;
     private array $mutationContext;
@@ -106,10 +108,10 @@ class OrmResource implements ResourceInterface
         if ($this->parent) {
             $mapping = $this->getParentMapping();
             $key = $this->getParentContextKey();
-            if ($mapping['type'] == ClassMetadataInfo::MANY_TO_MANY) {
-                $data[$mapping['fieldName']] = (array)$context[$key];
+            if ($mapping instanceof ManyToManyAssociationMapping) {
+                $data[$mapping->fieldName] = (array)$context[$key];
             } else {
-                $data[$mapping['fieldName']] = $context[$key];
+                $data[$mapping->fieldName] = $context[$key];
             }
         }
 
@@ -120,8 +122,8 @@ class OrmResource implements ResourceInterface
 
         $meta = $this->getMetadata();
         foreach ($meta->getAssociationMappings() as $fieldName => $mapping) {
-            if (isset($mapping['joinColumns'])) {
-                $column = $mapping["joinColumns"][0]["name"];
+            if (property_exists($mapping, 'joinColumns')) {
+                $column = $mapping->joinColumns[0]->name;
                 if (isset($data[$column]) &&
                     $fieldName != $column &&
                     (is_string($data[$column]) || is_numeric($data[$column]))) {
@@ -236,7 +238,7 @@ class OrmResource implements ResourceInterface
             $curMapping = $curResource->getParentMapping();
             $key = $curResource->getParentContextKey();
             $field = "$tableAlias.{$curMapping['fieldName']}";
-            if ($curMapping['type'] == ClassMetadataInfo::MANY_TO_MANY) {
+            if ($curMapping instanceof ManyToManyAssociationMapping) {
                 $query->andWhere($query->expr()->isMemberOf(":$key", $field));
             } else {
                 $query->andWhere($query->expr()->eq("IDENTITY($field)", ":$key"));
@@ -270,27 +272,31 @@ class OrmResource implements ResourceInterface
         }
 
         $parentMapping = $this->getParentMapping();
-        if ($parentMapping['type'] == ClassMetadataInfo::MANY_TO_MANY) {
-            $this->parentContextKey = $parentMapping['joinTable']['inverseJoinColumns'][0]['name'];
+        if ($parentMapping instanceof ManyToManyAssociationMapping) {
+            $this->parentContextKey = $parentMapping->joinTable->inverseJoinColumns[0]->name;
         } else {
-            $this->parentContextKey = $parentMapping['joinColumns'][0]['name'];
+            $this->parentContextKey = $parentMapping->joinColumns[0]->name;
         }
 
         return $this->parentContextKey;
     }
 
-    private function getParentMapping(): ?array
+    private function getParentMapping(): ?AssociationMapping
     {
         if (! $this->parentMapping) {
-            $mappings = $this->getMetadata()
-                ->getAssociationsByTargetClass($this->parent->entityName);
-            $this->parentMapping = current($mappings);
+            $mappings = $this->getMetadata()->getAssociationMappings();
+            foreach ($mappings as $mapping) {
+                if ($mapping->targetEntity == $this->parent->entityName) {
+                    $this->parentMapping = $mapping;
+                    return $mapping;
+                }
+            }
         }
 
         return $this->parentMapping;
     }
 
-    private function getMetadata(): ClassMetadataInfo
+    private function getMetadata(): ClassMetadata
     {
         return $this->em->getClassMetadata($this->entityName);
     }

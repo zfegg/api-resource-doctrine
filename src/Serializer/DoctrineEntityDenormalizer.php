@@ -19,7 +19,7 @@ class DoctrineEntityDenormalizer implements DenormalizerInterface
     /**
      * @inheritdoc
      */
-    public function denormalize($data, string $type, ?string $format = null, array $context = [])
+    public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
         return $this->doctrine->getManager($this->entityMaps[$type])->getReference($type, $data);
     }
@@ -50,5 +50,12 @@ class DoctrineEntityDenormalizer implements DenormalizerInterface
         }
 
         return false;
+    }
+
+    public function getSupportedTypes(?string $format): array
+    {
+        return [
+            'object' => true,
+        ];
     }
 }
